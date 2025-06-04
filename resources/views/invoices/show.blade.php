@@ -113,11 +113,12 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             @foreach($invoice->invoiceImages as $image)
                                 <div class="border rounded-lg overflow-hidden shadow-sm">
-                                    <a href="{{ Storage::url(str_replace('public/', '', $image->filepath)) }}" target="_blank">
-                                        <img src="{{ Storage::url(str_replace('public/', '', $image->filepath)) }}" alt="{{ $image->filename }}" class="w-full h-48 object-cover">
+                                    {{-- GUNAKAN Storage::url() UNTUK MEMBANGUN URL PUBLIK DARI filepath YANG DISIMPAN --}}
+                                    <a href="{{ Storage::url($image->filepath) }}" target="_blank">
+                                        <img src="{{ Storage::url($image->filepath) }}" alt="{{ $image->title ?? $image->filename }}" class="w-full h-48 object-cover">
                                     </a>
                                     <div class="p-2 text-xs text-gray-600">
-                                        {{ $image->filename }}
+                                        {{ $image->title ?? $image->filename }}
                                     </div>
                                 </div>
                             @endforeach

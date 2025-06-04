@@ -44,4 +44,11 @@
             </x-primary-button>
         </div>
     </form>
+    <div class="mt-4 text-center">
+    <p class="text-sm text-gray-600">
+        Apakah Anda supplier yang ingin mengirimkan gambar faktur? <a href="{{ route('public.supplier.upload_form') }}" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Klik di sini.</a>
+    </p>
+</div>
+</div>
+</div>
 </x-guest-layout>

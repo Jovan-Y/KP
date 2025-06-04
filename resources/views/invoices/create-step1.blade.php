@@ -47,12 +47,13 @@
                     <p class="text-red-500 text-xs mt-1" id="name_error"></p>
                 </div>
                 <div class="mb-4">
-                    <x-input-label for="new_supplier_phone" :value="__('Nomor Telepon')" />
-                    <x-text-input id="new_supplier_phone" class="block mt-1 w-full" type="text" name="phone" />
+                    <x-input-label for="new_supplier_email" :value="__('Email Supplier')" />
+                    <x-text-input id="new_supplier_email" class="block mt-1 w-full" type="email" name="email" required />
+                    <p class="text-red-500 text-xs mt-1" id="email_error"></p> {{-- Tambahkan id untuk error handling --}}
                 </div>
                 <div class="mb-4">
-                    <x-input-label for="new_supplier_company" :value="__('Perusahaan')" />
-                    <x-text-input id="new_supplier_company" class="block mt-1 w-full" type="text" name="company_name" />
+                    <x-input-label for="new_supplier_phone" :value="__('Nomor Telepon')" />
+                    <x-text-input id="new_supplier_phone" class="block mt-1 w-full" type="text" name="phone" />
                 </div>
                 <div class="flex justify-end space-x-2">
                     <x-secondary-button type="button" onclick="closeSupplierModal()">Batal</x-secondary-button>
@@ -99,9 +100,9 @@
                     closeSupplierModal();
                     alert('Supplier berhasil ditambahkan!');
                 } else {
-                    // Handle validation errors if any
-                    if (data.errors && data.errors.name) {
-                        document.getElementById('name_error').textContent = data.errors.name[0];
+                    if (data.errors) {
+                        document.getElementById('name_error').textContent = data.errors.name ? data.errors.name[0] : '';
+                        document.getElementById('email_error').textContent = data.errors.email ? data.errors.email[0] : ''; // Tambahkan ini
                     } else {
                         alert('Gagal menambahkan supplier.');
                     }
