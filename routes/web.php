@@ -9,6 +9,8 @@ use App\Http\Controllers\SupplierUploadController; // CONTROLLER BARU
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\SupplierUploadReviewController;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Mail\Message;
 
 use App\Mail\SupplierOtpMail; // Pastikan ini diimpor jika Anda pakai
 
@@ -76,9 +78,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/supplier-uploads-review/{supplierUpload}/link', [SupplierUploadReviewController::class, 'linkToInvoice'])->name('manager.supplier_uploads.link');
     Route::delete('/supplier-uploads-review/{supplierUpload}', [SupplierUploadReviewController::class, 'destroy'])->name('manager.supplier_uploads.destroy');
         // Rute ini digantikan oleh alur supplier.upload.store baru
-        // Route::post('/invoices/{invoice}/upload-image', [InvoiceController::class, 'uploadImage'])->name('invoices.uploadImage');
+     Route::post('/invoices/{invoice}/upload-image', [InvoiceController::class, 'uploadImage'])->name('invoices.uploadImage');
     });
 });
+Route::get('/tes-email-manual', function () {
+    $emailPenerima = 'manajer.imesa@gmail.com'; // GANTI INI DENGAN EMAIL ANDA SENDIRI UNTUK TES
 
+    try {
+        Mail::raw('Ini adalah email tes dari aplikasi Laravel pada ' . now(), function (Message $message) use ($emailPenerima) {
+            $message->to($emailPenerima)
+                    ->subject('Tes Pengiriman Email Laravel');
+        });
+
+        return 'Berhasil mencoba mengirim email ke ' . $emailPenerima . '. Silakan periksa Kotak Masuk dan folder Spam.';
+
+    } catch (\Exception $e) {
+        return 'GAGAL mengirim email. Error: ' . $e->getMessage();
+    }
+});
 // Memuat rute autentikasi Breeze (login, register, logout, dll.)
 require __DIR__.'/auth.php';

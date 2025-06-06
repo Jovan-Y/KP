@@ -10,16 +10,29 @@ use Illuminate\Support\Facades\Storage;
 
 class SupplierUploadReviewController extends Controller
 {
-    // Menampilkan daftar gambar yang belum dikaitkan
     public function index()
     {
+        // 1. Ambil unggahan yang belum terkait, beserta relasi supplier
         $unlinkedUploads = SupplierUpload::with('supplier')
                                         ->where('is_linked', false)
                                         ->orderBy('created_at', 'desc')
                                         ->paginate(10);
-        $invoices = Invoice::orderBy('invoice_number')->get(['id', 'invoice_number', 'invoice_name']); // Ambil faktur untuk dropdown
 
-        return view('manager.supplier_uploads.index', compact('unlinkedUploads', 'invoices'));
+        // 2. Ambil ID supplier dari unggahan yang ditampilkan di halaman ini
+        $supplierIds = $unlinkedUploads->pluck('supplier_id')->unique()->filter();
+
+        // 3. Ambil semua faktur yang relevan untuk supplier-supplier tersebut
+        //    dan kelompokkan berdasarkan 'supplier_id' untuk kemudahan di view
+        $invoicesBySupplier = [];
+        if ($supplierIds->isNotEmpty()) {
+            $invoicesBySupplier = Invoice::whereIn('supplier_id', $supplierIds)
+                                        ->orderBy('invoice_number')
+                                        ->get(['id', 'invoice_number', 'invoice_name', 'supplier_id'])
+                                        ->groupBy('supplier_id');
+        }
+
+        // 4. Kirim data ke view
+        return view('manager.supplier_uploads.index', compact('unlinkedUploads', 'invoicesBySupplier'));
     }
 
     // Mengaitkan gambar ke faktur
