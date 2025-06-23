@@ -37,7 +37,6 @@
 
                         {{-- Informasi Dasar Faktur --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {{-- Input Nama Faktur telah dihapus dari sini --}}
                             <div>
                                 <x-input-label for="invoice_number" value="Nomor Faktur" />
                                 <x-text-input id="invoice_number" class="block mt-1 w-full" type="text" name="invoice_number" :value="old('invoice_number')" required />
@@ -140,8 +139,12 @@
                         <div class="mt-8 border-t pt-6">
                             <h3 class="text-lg font-bold mb-4">Upload Faktur (Wajib)</h3>
                             <div class="p-4 border rounded-md bg-gray-50">
-                                <x-input-label for="reference_images" value="Unggah satu atau beberapa gambar" />
-                                <input type="file" name="reference_images[]" id="reference_images" class="block w-full mt-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" multiple required>
+                                <div id="reference_images_container" class="space-y-4">
+                                    {{-- Input file akan ditambahkan di sini oleh JavaScript --}}
+                                </div>
+                                <button type="button" onclick="addReferenceImage()" class="mt-4 inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-500">
+                                    Tambah File Gambar
+                                </button>
                             </div>
                         </div>
 
@@ -161,14 +164,12 @@
     <script>
         let itemIndex = 0;
         let taxIndex = 0;
+        let imageIndex = 0; // Counter untuk gambar
 
         document.addEventListener('DOMContentLoaded', () => {
-            // ================= AWAL PERUBAHAN 2 =================
-            // Ambil data dari elemen HTML
             const dataElement = document.getElementById('old-input-data');
             const oldItems = JSON.parse(dataElement.dataset.oldItems || '[]');
             const oldTaxes = JSON.parse(dataElement.dataset.oldTaxes || '[]');
-            // ========================================================
 
             if (oldItems && oldItems.length > 0) {
                 oldItems.forEach(itemData => addItem(itemData));
@@ -179,6 +180,8 @@
             if (oldTaxes && oldTaxes.length > 0) {
                 oldTaxes.forEach(taxData => addOtherTax(taxData));
             }
+            
+            addReferenceImage(); // Tambah input file pertama saat halaman dimuat
 
             calculateTotal(); 
 
@@ -240,6 +243,32 @@
             `;
             container.appendChild(newTaxRow);
             taxIndex++;
+        }
+        
+        function addReferenceImage() {
+            const container = document.getElementById('reference_images_container');
+            const newImageRow = document.createElement('div');
+            newImageRow.id = `image_row_${imageIndex}`;
+            newImageRow.className = 'flex items-center gap-2';
+            // PERUBAHAN DI SINI: Menambahkan atribut 'multiple'
+            newImageRow.innerHTML = `
+                <input type="file" name="reference_images[]" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" multiple required>
+                <button type="button" onclick="removeReferenceImage(${imageIndex})" class="text-red-500 hover:text-red-700 font-bold p-1">&times;</button>
+            `;
+            container.appendChild(newImageRow);
+            if (imageIndex > 0) {
+                newImageRow.querySelector('input').removeAttribute('required');
+            }
+            imageIndex++;
+        }
+        
+        function removeReferenceImage(index) {
+            const row = document.getElementById(`image_row_${index}`);
+            if (document.getElementById('reference_images_container').children.length > 1) {
+                row.remove();
+            } else {
+                alert('Setidaknya satu file gambar wajib diunggah.');
+            }
         }
 
         function removeOtherTax(index) { document.getElementById(`tax_row_${index}`).remove(); calculateTotal(); }

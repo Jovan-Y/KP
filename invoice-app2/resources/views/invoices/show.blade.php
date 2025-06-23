@@ -16,22 +16,20 @@
                     <div class="flex justify-between items-start">
                         <div>
                             <h3 class="text-xl font-bold">FAKTUR</h3>
-                            {{-- Baris Nama Faktur dihapus dari sini --}}
                             <p class="text-gray-500">{{ $invoice->invoice_number }}</p>
-                             @if($invoice->po_number)
+                            @if($invoice->po_number)
                                 <p class="text-sm text-gray-500 mt-1">Nomor PO: {{ $invoice->po_number }}</p>
                             @endif
                         </div>
                         <div class="text-right">
-                             <p class="font-semibold text-lg">{{ $invoice->supplier->company_name }}</p>
-                             <p class="text-sm text-gray-600">Supplier: {{ $invoice->supplier->name }}</p>
-                             @if($invoice->supplier->address)
+                            <p class="font-semibold text-lg">{{ $invoice->supplier->company_name }}</p>
+                            <p class="text-sm text-gray-600">Supplier: {{ $invoice->supplier->name }}</p>
+                            @if($invoice->supplier->address)
                                 <p class="text-sm text-gray-600">{{ $invoice->supplier->address }}</p>
-                             @endif
-                             <p class="text-sm text-gray-600">{{ $invoice->supplier->phone }}</p>
-                             
-                             {{-- ================= AWAL KODE BARU ================= --}}
-                             @if(!empty($invoice->supplier->payment_details))
+                            @endif
+                            <p class="text-sm text-gray-600">{{ $invoice->supplier->phone }}</p>
+                            
+                            @if(!empty($invoice->supplier->payment_details))
                                 <div class="mt-2 pt-2 border-t border-gray-200 text-left">
                                     <p class="font-semibold text-xs text-gray-500 uppercase">Info Pembayaran:</p>
                                     @foreach($invoice->supplier->payment_details as $detail)
@@ -40,8 +38,7 @@
                                         </p>
                                     @endforeach
                                 </div>
-                             @endif
-                             {{-- ================= AKHIR KODE BARU ================= --}}
+                            @endif
                         </div>
                     </div>
                     <hr class="my-4">
@@ -82,7 +79,6 @@
                                 </tr>
                                 @if($invoice->discount_value > 0)
                                     @php
-                                        // Menghitung jumlah diskon aktual berdasarkan tipe
                                         $discountAmount = $invoice->discount_type === 'percentage'
                                             ? ($invoice->subtotal_items * $invoice->discount_value) / 100
                                             : $invoice->discount_value;
@@ -130,27 +126,42 @@
             </div>
 
             {{-- BAGIAN 2: TOMBOL AKSI --}}
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 flex space-x-4">
-                        @if(!$invoice->is_paid)
-                            @php $hasPaymentProof = $invoice->paymentProofImages()->exists(); @endphp
-                            <form action="{{ route('invoices.markPaid', $invoice->id) }}" method="POST" onsubmit="return confirm('Tandai faktur ini sebagai lunas?');">
-                                @csrf
-                                <x-primary-button type="submit" class="bg-green-600 hover:bg-green-500" :disabled="!$hasPaymentProof" title="{{ !$hasPaymentProof ? 'Unggah bukti pembayaran dulu' : '' }}">Tandai Lunas</x-primary-button>
-                            </form>
-                        @else
-                            <form action="{{ route('invoices.unmarkPaid', $invoice->id) }}" method="POST" onsubmit="return confirm('Batalkan pelunasan faktur ini?');">
-                                @csrf
-                                <x-secondary-button type="submit">Batalkan Pelunasan</x-secondary-button>
-                            </form>
-                        @endif
-                        
-                        <form action="{{ route('invoices.destroy', $invoice->id) }}" method="POST" onsubmit="return confirm('Hapus faktur ini?');">
-                            @csrf @method('DELETE')
-                            <x-danger-button>Hapus Faktur</x-danger-button>
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 flex items-center space-x-4">
+                    @if (!$invoice->is_paid)
+                        <a href="{{ route('invoices.edit', $invoice->id) }}" class="inline-flex items-center px-4 py-2 bg-yellow-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-600 active:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                            Edit Faktur
+                        </a>
+                    @endif
+
+                    @php
+                        // Cek bukti bayar dengan relasi model
+                        $hasPaymentProof = $invoice->paymentProofImages->isNotEmpty();
+                    @endphp
+
+                    @if (!$invoice->is_paid && $hasPaymentProof)
+                        <form action="{{ route('invoices.markPaid', $invoice->id) }}" method="POST" onsubmit="return confirm('Tandai faktur ini sebagai lunas?');">
+                            @csrf
+                            @method('PATCH')
+                            <x-primary-button type="submit" class="bg-green-600 hover:bg-green-500">
+                                Tandai Lunas
+                            </x-primary-button>
                         </form>
-                    </div>
+                    @elseif (!$invoice->is_paid && !$hasPaymentProof)
+                        <p class="text-sm text-gray-500 italic">Unggah bukti pembayaran untuk melunasi faktur.</p>
+                    @endif
+                    
+                    @if ($invoice->is_paid && Auth::user()->role === 'manager')
+                        <form action="{{ route('invoices.unmarkPaid', $invoice->id) }}" method="POST" onsubmit="return confirm('Batalkan pelunasan faktur ini?');">
+                            @csrf
+                            @method('PATCH')
+                            <x-secondary-button type="submit">
+                                Batalkan Pelunasan
+                            </x-secondary-button>
+                        </form>
+                    @endif
                 </div>
+            </div>
 
             {{-- BAGIAN 3: GAMBAR-GAMBAR --}}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -158,6 +169,7 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h4 class="text-lg font-bold mb-4 text-gray-900">Bukti Pembayaran</h4>
+                        @if (!$invoice->is_paid)
                             <div class="mb-6 p-4 border rounded-md bg-gray-50">
                                 <form action="{{ route('invoices.uploadPaymentProof', $invoice->id) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
@@ -173,8 +185,9 @@
                                     <x-primary-button class="mt-4">Unggah Bukti</x-primary-button>
                                 </form>
                             </div>
+                        @endif
 
-                        @if($invoice->paymentProofImages->count() > 0)
+                        @if($invoice->paymentProofImages->isNotEmpty())
                             <div class="grid grid-cols-2 gap-4">
                                 @foreach($invoice->paymentProofImages as $image)
                                     <div class="border rounded-lg overflow-hidden shadow-sm">
@@ -183,7 +196,7 @@
                                         </a>
                                         <div class="p-2 text-xs text-gray-600 flex justify-between items-center">
                                             <p class="truncate pr-2" title="{{ $image->title ?? $image->filename }}">{{ $image->title ?? $image->filename }}</p>
-                                            @if(Auth::user()->role === 'manager')
+                                            @if(Auth::user()->role === 'manager' && !$invoice->is_paid)
                                                 <form action="{{ route('invoices.images.destroy', $image->id) }}" method="POST" onsubmit="return confirm('Hapus bukti pembayaran ini?');">
                                                     @csrf @method('DELETE')
                                                     <button type="submit" class="text-red-500 hover:text-red-700 font-bold flex-shrink-0">&times;</button>
@@ -203,27 +216,21 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                          <h4 class="text-lg font-bold mb-4 text-gray-900">Gambar Faktur</h4>
-                         @if($invoice->referenceImages->count() > 0)
+                         @if($invoice->referenceImages->isNotEmpty())
                             <div class="grid grid-cols-2 gap-4">
                                 @foreach($invoice->referenceImages as $image)
                                      <div class="border rounded-lg overflow-hidden shadow-sm">
-                                        <a href="{{ $image->filepath }}" target="_blank">
-                                            <img src="{{ $image->filepath }}" alt="{{ $image->title ?? $image->filename }}" class="w-full h-32 object-cover">
-                                        </a>
-                                        <div class="p-2 text-xs text-gray-600">
-                                            <p class="truncate" title="{{ $image->title ?? $image->filename }}">{{ $image->title ?? $image->filename }}</p>
-                                            @if(Auth::user()->role === 'manager')
-                                                <form action="{{ route('invoices.images.destroy', $image->id) }}" method="POST" class="mt-1" onsubmit="return confirm('Anda yakin ingin menghapus gambar referensi ini?');">
-                                                    @csrf @method('DELETE')
-                                                    <x-danger-button type="submit" class="w-full justify-center text-xs px-2 py-1">Hapus</x-danger-button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </div>
+                                         <a href="{{ $image->filepath }}" target="_blank">
+                                             <img src="{{ $image->filepath }}" alt="{{ $image->title ?? $image->filename }}" class="w-full h-32 object-cover">
+                                         </a>
+                                         <div class="p-2 text-xs text-gray-600">
+                                             <p class="truncate" title="{{ $image->title ?? $image->filename }}">{{ $image->title ?? $image->filename }}</p>
+                                         </div>
+                                     </div>
                                 @endforeach
                             </div>
                          @else
-                            <p class="text-gray-500 text-center py-4">Tidak ada gambar referensi.</p>
+                             <p class="text-gray-500 text-center py-4">Tidak ada gambar referensi.</p>
                          @endif
                     </div>
                 </div>
