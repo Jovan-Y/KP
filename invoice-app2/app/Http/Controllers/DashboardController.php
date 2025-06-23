@@ -2,48 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Invoice;
 use Illuminate\Http\Request;
-use Carbon\Carbon; // Pastikan Carbon di-import
+use App\Models\Invoice;
+use App\Models\Supplier;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    /**
-     * Menampilkan data untuk halaman utama.
-     */
     public function index()
     {
-        // 1. Ambil faktur yang SUDAH TERLEWAT jatuh tempo
-        $overdueInvoices = Invoice::with('supplier')
-            ->where('is_paid', false)
-            ->whereDate('due_date', '<', Carbon::today())
-            ->orderBy('due_date', 'asc')
-            ->get();
+        // Gunakan satu titik waktu yang konsisten untuk semua query
+        $today = now()->startOfDay();
 
-        // 2. Ambil faktur yang jatuh tempo HARI INI atau BESOK (Mendesak)
-        $urgentInvoices = Invoice::with('supplier')
-            ->where('is_paid', false)
-            ->whereDate('due_date', '>=', Carbon::today())
-            ->whereDate('due_date', '<=', Carbon::today()->addDay())
-            ->orderBy('due_date', 'asc')
-            ->get();
+        // 1. Logika Terlewat Jatuh Tempo: due_date secara eksplisit HARUS KURANG DARI awal hari ini.
+        $overdueInvoicesQuery = Invoice::where('is_paid', false)->whereDate('due_date', '<', $today);
+
+        // 2. Logika Akan Jatuh Tempo: due_date HARUS LEBIH DARI ATAU SAMA DENGAN awal hari ini, dan kurang dari 3 hari ke depan.
+        $upcomingInvoicesQuery = Invoice::where('is_paid', false)
+            ->where('due_date', '>=', $today)
+            ->where('due_date', '<=', $today->copy()->addDays(3)->endOfDay());
+
+        $unpaidInvoicesQuery = Invoice::where('is_paid', false);
+
+        // Data untuk KPI Cards
+        $unpaidInvoicesCount = $unpaidInvoicesQuery->count();
+        $overdueInvoicesCount = $overdueInvoicesQuery->count();
+        $upcomingInvoicesCount = $upcomingInvoicesQuery->count();
             
-        // 3. LOGIKA BARU: Ambil faktur yang akan jatuh tempo dalam 3 hari (tidak termasuk yang mendesak)
-        $upcomingInvoices = Invoice::with('supplier')
-            ->where('is_paid', false)
-            ->whereDate('due_date', '>', Carbon::today()->addDay()) // Mulai dari lusa
-            ->whereDate('due_date', '<=', Carbon::today()->addDays(3)) // Sampai 3 hari dari sekarang
-            ->orderBy('due_date', 'asc')
-            ->get();
+        // Data untuk Daftar Peringatan
+        $overdueInvoices = $overdueInvoicesQuery->with('supplier')->orderBy('due_date', 'asc')->get();
+        $upcomingInvoices = $upcomingInvoicesQuery->with('supplier')->orderBy('due_date', 'asc')->get();
 
-        // 4. Hitung total faktur yang belum lunas (untuk pemberitahuan umum)
-        $unpaidInvoicesCount = Invoice::where('is_paid', false)->count();
-
-        // 5. Kirim semua data yang diperlukan ke view
         return view('dashboard', compact(
             'unpaidInvoicesCount',
+            'overdueInvoicesCount',
+            'upcomingInvoicesCount',
             'overdueInvoices',
-            'urgentInvoices',
             'upcomingInvoices'
         ));
     }

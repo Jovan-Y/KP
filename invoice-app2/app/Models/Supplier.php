@@ -17,6 +17,7 @@ class Supplier extends Model
         'payment_details', // DITAMBAHKAN
         'email',
     ];
+    
 
     // Cast ini secara otomatis mengubah JSON dari DB menjadi array, dan sebaliknya.
     protected $casts = [

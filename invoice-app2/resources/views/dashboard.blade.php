@@ -1,132 +1,117 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Halaman Utama
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+            {{ __('Dashboard') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 space-y-6">
 
-                    {{-- Blok Notifikasi Faktur Terlewat Jatuh Tempo --}}
-                    @if($overdueInvoices->isNotEmpty())
-                        <div class="p-4 bg-red-200 border-l-4 border-red-600 text-red-900 rounded-md">
-                            <h3 class="font-bold text-lg mb-2">Peringatan Keras: {{ $overdueInvoices->count() }} Faktur Terlewat Jatuh Tempo!</h3>
-                            <div class="space-y-3 max-h-56 overflow-y-auto pr-2">
-                                @foreach($overdueInvoices as $invoice)
-                                    @php
-                                        $dueDate = \Carbon\Carbon::parse($invoice->due_date);
-                                        $overdueDays = $dueDate->diffInDays(\Carbon\Carbon::today());
-                                        $overdueText = "Terlewat <span class='font-bold'>{$overdueDays} hari</span>";
-                                    @endphp
-                                    <div class="flex items-center justify-between p-3 bg-red-100 rounded-lg">
-                                        <div>
-                                            <p class="font-semibold text-red-900">No: {{ $invoice->invoice_number }}</p>
-                                            <p class="text-sm">Supplier: <strong>{{ $invoice->supplier->company_name }}</strong></p>
-                                            <div class="text-sm mt-1">
-                                                <span>{!! $overdueText !!}</span>
-                                                <span class="mx-1">&bull;</span>
-                                                <span>Pembayaran: <span class="font-semibold">{{ ucfirst($invoice->payment_type) }}</span></span>
-                                            </div>
-                                        </div>
-                                        <a href="{{ route('invoices.show', $invoice->id) }}" class="inline-block px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-md hover:bg-red-700 transition flex-shrink-0">
-                                            Lihat Detail
-                                        </a>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
+            <div class="mb-6 flex flex-col sm:flex-row gap-3">
+                <a href="{{ route('invoices.create.step1') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500 active:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    {{ __('Tambah Faktur Baru') }}
+                </a>
+                 <a href="{{ route('invoices.index') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 active:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                    {{ __('Lihat Semua Faktur') }}
+                </a>
+            </div>
 
-                    {{-- Blok Notifikasi Faktur Jatuh Tempo Mendesak --}}
-                    @if($urgentInvoices->isNotEmpty())
-                        <div class="p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-md">
-                            <h3 class="font-bold text-lg mb-2">Peringatan: {{ $urgentInvoices->count() }} Faktur Jatuh Tempo Mendesak</h3>
-                            <div class="space-y-3 max-h-56 overflow-y-auto pr-2">
-                                @foreach($urgentInvoices as $invoice)
-                                    @php
-                                        $dueDate = \Carbon\Carbon::parse($invoice->due_date);
-                                        $dueText = '';
-                                        if ($dueDate->isToday()) {
-                                            $dueText = 'Jatuh tempo <span class="font-bold">hari ini</span>';
-                                        } elseif ($dueDate->isTomorrow()) {
-                                            $dueText = 'Jatuh tempo <span class="font-bold">besok</span>';
-                                        }
-                                    @endphp
-                                    <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                                        <div>
-                                            <p class="font-semibold text-yellow-900">No: {{ $invoice->invoice_number }}</p>
-                                            <p class="text-sm text-yellow-700">Supplier: <strong>{{ $invoice->supplier->company_name }}</strong></p>
-                                            <div class="text-sm text-yellow-700 mt-1">
-                                                <span>{!! $dueText !!}</span>
-                                                <span class="mx-1">&bull;</span>
-                                                <span>Pembayaran: <span class="font-semibold">{{ ucfirst($invoice->payment_type) }}</span></span>
-                                            </div>
-                                        </div>
-                                        <a href="{{ route('invoices.show', $invoice->id) }}" class="inline-block px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded-md hover:bg-yellow-600 transition flex-shrink-0">
-                                            Lihat Detail
-                                        </a>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-
-                    {{-- Pemberitahuan Peringatan 3 Hari Mendatang --}}
-                    @if($upcomingInvoices->isNotEmpty())
-                        <div class="p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-800 rounded-md">
-                             <h3 class="font-bold text-lg mb-2">Perhatian: {{ $upcomingInvoices->count() }} Faktur Jatuh Tempo dalam 3 Hari</h3>
-                             <div class="space-y-3 max-h-56 overflow-y-auto pr-2">
-                                @foreach($upcomingInvoices as $invoice)
-                                    @php
-                                        $dueDate = \Carbon\Carbon::parse($invoice->due_date);
-                                        $diffInDays = $dueDate->diffInDays(\Carbon\Carbon::today());
-                                        $dueText = "Jatuh tempo dalam <span class='font-bold'>{$diffInDays} hari</span>";
-                                    @endphp
-                                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                                        <div>
-                                            <p class="font-semibold text-blue-900">No: {{ $invoice->invoice_number }}</p>
-                                            <p class="text-sm text-blue-700">Supplier: <strong>{{ $invoice->supplier->company_name }}</strong></p>
-                                            <div class="text-sm text-blue-700 mt-1">
-                                                <span>{!! $dueText !!}</span>
-                                                <span class="mx-1">&bull;</span>
-                                                <span>Pembayaran: <span class="font-semibold">{{ ucfirst($invoice->payment_type) }}</span></span>
-                                            </div>
-                                        </div>
-                                        <a href="{{ route('invoices.show', $invoice->id) }}" class="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-md hover:bg-blue-700 transition flex-shrink-0">
-                                            Lihat Detail
-                                        </a>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-                    
-                    {{-- Pemberitahuan Umum --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 flex flex-col justify-between">
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900">Pemberitahuan Umum</h3>
-                        <p class="mt-1 text-sm text-gray-600">
-                            Saat ini ada <strong>{{ $unpaidInvoicesCount }}</strong> faktur yang belum lunas secara keseluruhan.
-                        </p>
+                        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Faktur Belum Lunas</h3>
+                        <p class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white">{{ $unpaidInvoicesCount }}</p>
+                    </div>
+                    @if($unpaidInvoicesCount > 0)
                         <div class="mt-4">
-                            <a href="{{ route('invoices.index') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 active:bg-blue-700 focus:outline-none focus:border-blue-700 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                Lihat Semua Faktur
+                            <a href="{{ route('invoices.index') }}" class="w-full text-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900 hover:bg-indigo-200 dark:hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Lihat Semua
                             </a>
                         </div>
-                    </div>
-                
-                        <div class="border-t pt-6">
-                            <div class="mt-4 flex flex-wrap gap-4">
-                                <a href="{{ route('invoices.create.step1') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500 active:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                    <svg class="w-4 h-4 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                    </svg>
-                                    Tambah Faktur Baru
-                                </a>
-                            </div>
+                    @endif
+                </div>
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                    <h3 class="text-sm font-medium text-red-500 dark:text-red-400 truncate">Terlewat Jatuh Tempo</h3>
+                    <p class="mt-1 text-3xl font-semibold text-red-600 dark:text-red-500">{{ $overdueInvoicesCount }}</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                    <h3 class="text-sm font-medium text-orange-500 dark:text-orange-400 truncate">Akan Jatuh Tempo (3 Hari)</h3>
+                    <p class="mt-1 text-3xl font-semibold text-orange-600 dark:text-orange-500">{{ $upcomingInvoicesCount }}</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border-l-4 border-red-500">
+                    <div class="p-6 text-gray-900 dark:text-gray-100">
+                        <h3 class="font-semibold text-lg text-red-600 dark:text-red-500 mb-4">Terlewat Jatuh Tempo ({{ $overdueInvoices->count() }})</h3>
+                        <div class="max-h-80 overflow-y-auto pr-2">
+                            @forelse($overdueInvoices as $invoice)
+                                <div class="py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <p class="font-bold">{{ $invoice->invoice_number }}</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $invoice->supplier->company_name }} - 
+                                                <span class="font-semibold">Lewat {{ now()->startOfDay()->diffInDays($invoice->due_date) }} hari</span>
+                                            </p>
+                                        </div>
+                                        <div class="text-right flex-shrink-0 ml-4">
+                                            @if(!empty($invoice->supplier->payment_details) && is_array($invoice->supplier->payment_details))
+                                                @foreach($invoice->supplier->payment_details as $detail)
+                                                    <p class="text-xs text-gray-600 dark:text-gray-400">a/n: {{ $detail['account_name'] ?? '' }}</p>
+                                                    <p class="text-xs text-gray-600 dark:text-gray-400">{{ strtoupper($detail['bank_name'] ?? '') }} ({{ $detail['account_number'] ?? '' }})</p>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <p class="text-gray-500 dark:text-gray-400">Tidak ada faktur yang terlewat jatuh tempo.</p>
+                            @endforelse
                         </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border-l-4 border-blue-500">
+                    <div class="p-6 text-gray-900 dark:text-gray-100">
+                        <h3 class="font-semibold text-lg text-blue-600 dark:text-blue-500 mb-4">Akan Jatuh Tempo (3 Hari)</h3>
+                        <div class="max-h-80 overflow-y-auto pr-2">
+                            @forelse($upcomingInvoices as $invoice)
+                            <div class="py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-bold">{{ $invoice->invoice_number }}</p>
+                                        {{-- PERUBAHAN: Logika Tampilan Hari Lebih Andal --}}
+                                        <p class="text-sm text-orange-500 font-semibold">{{ $invoice->supplier->company_name }} - 
+                                            @php
+                                                $dueDate = \Carbon\Carbon::parse($invoice->due_date);
+                                            @endphp
+
+                                            @if($dueDate->isToday())
+                                                Jatuh tempo Hari Ini
+                                            @elseif($dueDate->isTomorrow())
+                                                Jatuh tempo Besok
+                                            @else
+                                                Jatuh tempo dalam {{ $dueDate->diffInDays(now()) }} hari
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <div class="text-right flex-shrink-0 ml-4">
+                                        @if(!empty($invoice->supplier->payment_details) && is_array($invoice->supplier->payment_details))
+                                            @foreach($invoice->supplier->payment_details as $detail)
+                                                <p class="text-xs text-gray-600 dark:text-gray-400">a/n: {{ $detail['account_name'] ?? '' }}</p>
+                                                <p class="text-xs text-gray-600 dark:text-gray-400">{{ strtoupper($detail['bank_name'] ?? '') }} ({{ $detail['account_number'] ?? '' }})</p>
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                                <p class="text-gray-500 dark:text-gray-400">Tidak ada faktur yang akan jatuh tempo dalam 3 hari ke depan.</p>
+                            @endforelse
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

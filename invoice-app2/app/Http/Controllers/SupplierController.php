@@ -4,52 +4,77 @@ namespace App\Http\Controllers;
 
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SupplierController extends Controller
 {
     /**
-     * Menampilkan halaman daftar semua supplier.
+     * Display a listing of the resource.
      */
     public function index()
     {
-        $suppliers = Supplier::orderBy('company_name')->get();
+        // Menggunakan latest() untuk mengurutkan berdasarkan data terbaru
+        $suppliers = Supplier::latest()->get();
         return view('suppliers.index', compact('suppliers'));
     }
 
     /**
-     * Menyimpan supplier baru dari popup.
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
+        // PERUBAHAN: Menyesuaikan nama field dengan database ('name' dan 'phone')
+        $rules = [
             'company_name' => 'required|string|max:255',
+            'name' => [ // Menggunakan 'name'
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('suppliers')->where(function ($query) use ($request) {
+                    return $query->where('email', $request->email);
+                }),
+            ],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('suppliers')->where(function ($query) use ($request) {
+                    return $query->where('name', $request->name); // Menggunakan 'name'
+                }),
+            ],
+            'phone' => 'nullable|string|max:255', // Menggunakan 'phone'
             'address' => 'nullable|string',
-            'email' => 'required|email|max:255|unique:suppliers,email',
-        ]);
+            'payment_details' => 'present|array',
+            'payment_details.*.bank_name' => 'required|string|max:255',
+            'payment_details.*.account_number' => 'required|string|max:255',
+            'payment_details.*.account_name' => 'required|string|max:255',
+        ];
 
-        $supplier = Supplier::create($request->all());
+        $messages = [
+            'name.unique' => 'Kombinasi Nama Kontak dan Email ini sudah terdaftar.', // Menyesuaikan pesan
+            'email.unique' => 'Kombinasi Email dan Nama Kontak ini sudah terdaftar.',
+            'payment_details.*.bank_name.required' => 'Nama bank wajib diisi.',
+            'payment_details.*.account_number.required' => 'Nomor rekening wajib diisi.',
+            'payment_details.*.account_name.required' => 'Nama pemilik rekening wajib diisi.',
+        ];
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Supplier berhasil ditambahkan!',
-            'supplier' => $supplier
-        ]);
+        $validatedData = $request->validate($rules, $messages);
+
+        $supplier = Supplier::create($validatedData);
+
+        return response()->json(['success' => 'Supplier berhasil ditambahkan!', 'supplier' => $supplier]);
     }
 
     /**
-     * Menghapus supplier dari database.
+     * Remove the specified resource from storage.
      */
     public function destroy(Supplier $supplier)
     {
-        // Cek apakah supplier memiliki faktur terkait untuk mencegah error.
-        if ($supplier->invoices()->exists()) {
-            return back()->with('error', 'Gagal! Supplier tidak dapat dihapus karena sudah memiliki faktur terkait.');
+        try {
+            $supplier->delete();
+            return redirect()->route('suppliers.index')->with('success', 'Supplier berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->route('suppliers.index')->with('error', 'Gagal menghapus supplier.');
         }
-
-        $supplier->delete();
-
-        return back()->with('success', 'Supplier berhasil dihapus.');
     }
 }

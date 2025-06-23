@@ -18,7 +18,7 @@
                             Kelola Supplier
                         </x-nav-link>
                         <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
-            Kelola Pengguna
+            Kelola Akun
         </x-nav-link>
                     @endif
                 </div>
