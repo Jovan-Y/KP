@@ -1,5 +1,6 @@
 <x-guest-layout>
-    <form method="POST" action="{{ route('password.store') }}">
+    {{-- PERUBAHAN DI SINI: Menambahkan atribut 'novalidate' --}}
+    <form method="POST" action="{{ route('password.store') }}" novalidate>
         @csrf
 
         <!-- Password Reset Token -->
@@ -8,7 +9,18 @@
         <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
+            {{-- PERUBAHAN DI SINI: Menambahkan atribut 'readonly' dan styling untuk field email --}}
+            <x-text-input 
+                id="email" 
+                class="block mt-1 w-full bg-gray-100" 
+                type="email" 
+                name="email" 
+                :value="old('email', $request->email)" 
+                required 
+                autofocus 
+                autocomplete="username" 
+                readonly 
+            />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
@@ -24,8 +36,8 @@
             <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
 
             <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
-                                name="password_confirmation" required autocomplete="new-password" />
+                                  type="password"
+                                  name="password_confirmation" required autocomplete="new-password" />
 
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>

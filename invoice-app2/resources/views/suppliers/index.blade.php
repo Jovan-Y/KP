@@ -43,7 +43,6 @@
                                             <div class="text-sm text-gray-500">{{ $supplier->address }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            {{-- PERUBAHAN: Menampilkan 'name' dan 'phone' --}}
                                             <div class="text-sm font-medium text-gray-900">{{ $supplier->name }}</div>
                                             <div class="text-sm text-gray-500">{{ $supplier->email }}</div>
                                             <div class="text-sm text-gray-500">{{ $supplier->phone }}</div>
@@ -81,7 +80,8 @@
         <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
             <h3 class="text-lg font-bold mb-4">Tambah Supplier Baru</h3>
             <div id="modal_error_notification" class="hidden mb-4 p-3 bg-red-100 border border-red-200 text-red-800 rounded-md text-sm"></div>
-            <form id="addSupplierForm" onsubmit="handleSupplierSubmit(event)">
+            {{-- PERUBAHAN DI SINI: Menambahkan atribut 'novalidate' --}}
+            <form id="addSupplierForm" onsubmit="handleSupplierSubmit(event)" novalidate>
                 <div class="space-y-4">
                     <div>
                         <x-input-label for="new_company_name" value="Nama Perusahaan" />
@@ -89,7 +89,6 @@
                         <p class="text-red-500 text-xs mt-1" id="company_name_error"></p>
                     </div>
                     <div>
-                        {{-- PERUBAHAN: name attribute menjadi 'name' --}}
                         <x-input-label for="new_name" value="Nama Kontak (PIC)" />
                         <x-text-input id="new_name" class="block mt-1 w-full" type="text" name="name" required autofocus />
                         <p class="text-red-500 text-xs mt-1" id="name_error"></p>
@@ -100,9 +99,9 @@
                         <p class="text-red-500 text-xs mt-1" id="email_error"></p>
                     </div>
                     <div>
-                        {{-- PERUBAHAN: name attribute menjadi 'phone' --}}
                         <x-input-label for="new_phone" value="Nomor Telepon" />
                         <x-text-input id="new_phone" class="block mt-1 w-full" type="text" name="phone" />
+                        <p class="text-red-500 text-xs mt-1" id="phone_error"></p>
                     </div>
                     <div>
                         <x-input-label for="new_address" value="Alamat Supplier" />
@@ -177,6 +176,7 @@
             .then(data => {
                 if (data.success) {
                     closeSupplierModal();
+                    // Menggunakan alert bawaan browser karena lebih sederhana
                     alert('Supplier berhasil ditambahkan!');
                     location.reload(); 
                 }
@@ -189,7 +189,7 @@
                     }
                     
                     for (const key in errorData.errors) {
-                        const errorElement = document.getElementById(key + '_error');
+                        const errorElement = document.getElementById(key.replace(/\./g, '\\.') + '_error');
                         if (errorElement) {
                             errorElement.textContent = errorData.errors[key][0];
                         }

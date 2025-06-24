@@ -6,14 +6,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-use Illuminate\View\View;
+use App\Models\User; // Pastikan User model di-import
 
 class PasswordResetLinkController extends Controller
 {
     /**
      * Display the password reset link request view.
      */
-    public function create(): View
+    public function create()
     {
         return view('auth.forgot-password');
     }
@@ -29,16 +29,25 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $user = User::where('email', $request->email)->first();
 
-        return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        if ($user) {
+            // =================================================================
+            // PERBAIKAN FINAL: Membandingkan dengan "active" sesuai hasil debug
+            // =================================================================
+            if (strcasecmp($user->status ?? '', 'active') !== 0) {
+                 return back()->withErrors(['email' => 'Akun ini telah dinonaktifkan dan tidak dapat mengatur ulang kata sandi.']);
+            }
+        }
+        
+        // Melanjutkan proses pengiriman link jika statusnya 'active'
+        $status = Password::sendResetLink($request->only('email'));
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with('status', __($status));
+        }
+
+        return back()->withInput($request->only('email'))
+            ->withErrors(['email' => __($status)]);
     }
 }

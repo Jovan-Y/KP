@@ -30,14 +30,12 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice)
     {
-        // Memuat semua relasi yang dibutuhkan oleh view
         $invoice->load('supplier', 'invoiceItems', 'paymentProofImages', 'referenceImages');
         return view('invoices.show', compact('invoice'));
     }
 
     /**
      * Menampilkan halaman untuk mengedit faktur.
-     * PERBAIKAN: Menambahkan `load()` untuk memastikan data gambar dikirim ke view.
      */
     public function edit(Invoice $invoice)
     {
@@ -45,15 +43,12 @@ class InvoiceController extends Controller
             return redirect()->route('invoices.show', $invoice->id)->with('error', 'Faktur yang sudah lunas tidak dapat diedit.');
         }
         
-        // Memuat relasi agar data gambar tersedia di halaman edit
-        $invoice->load('invoiceItems', 'referenceImages', 'paymentProofImages');
-        
+        $invoice->load('invoiceItems', 'referenceImages');
         return view('invoices.edit', compact('invoice'));
     }
 
     /**
      * Memproses pembaruan data faktur.
-     * PERBAIKAN: Menambahkan logika untuk menghapus gambar lama dan menyimpan gambar baru.
      */
     public function update(Request $request, Invoice $invoice)
     {
@@ -61,32 +56,46 @@ class InvoiceController extends Controller
             return redirect()->route('invoices.show', $invoice->id)->with('error', 'Faktur yang sudah lunas tidak dapat diubah.');
         }
 
-        $request->validate([
+        $validatedData = $request->validate([
             'invoice_number' => 'required|string|max:255|unique:invoices,invoice_number,' . $invoice->id,
-            // Validasi lainnya bisa ditambahkan di sini jika perlu
+            'po_number' => 'nullable|string|max:255',
+            'invoice_date' => 'required|date',
+            'received_date' => 'required|date',
+            'due_date' => 'nullable|date|required_if:payment_type,kredit|after_or_equal:invoice_date',
+            'payment_type' => 'required|in:debit,kredit',
+            'discount_type' => 'required|in:fixed,percentage',
+            'discount_value' => 'nullable|numeric|min:0',
+            'ppn_percentage' => 'nullable|numeric|min:0|max:100',
+            'items' => 'required|array|min:1',
+            'items.*.item_name' => 'required|string|max:255',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit' => 'required|string|max:50',
+            'items.*.price' => 'required|numeric|min:0',
+            'other_taxes' => 'nullable|array',
+            'other_taxes.*.name' => 'nullable|string|max:255',
+            'other_taxes.*.type' => 'nullable|in:fixed,percentage',
+            'other_taxes.*.value' => 'nullable|numeric|min:0',
             'reference_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5000',
             'images_to_delete' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
         try {
-            // 1. Hapus gambar yang ditandai
+            // 1. Hapus gambar lama yang ditandai
             if ($request->filled('images_to_delete')) {
                 $imageIds = explode(',', $request->input('images_to_delete'));
                 $imagesToDelete = InvoiceImage::whereIn('id', $imageIds)->get();
-
                 foreach ($imagesToDelete as $image) {
-                    $storagePath = str_replace('/storage/', '', $image->filepath);
-                    Storage::disk('public')->delete($storagePath);
+                    Storage::disk('public')->delete(str_replace('/storage', '', $image->filepath));
                     $image->delete();
                 }
             }
 
-            // 2. Tambah gambar baru jika ada
+            // 2. Unggah gambar baru
             if ($request->hasFile('reference_images')) {
                 foreach ($request->file('reference_images') as $imageFile) {
                     if ($imageFile && $imageFile->isValid()) {
-                        $path = $imageFile->store('invoice_images/' . $invoice->id . '/references', 'public');
+                        $path = $imageFile->store("invoice_images/{$invoice->id}/references", 'public');
                         $invoice->invoiceImages()->create([
                             'filename' => $imageFile->hashName(),
                             'filepath' => Storage::url($path),
@@ -96,12 +105,58 @@ class InvoiceController extends Controller
                     }
                 }
             }
+            
+            // 3. Hapus item lama dan buat ulang
+            $invoice->invoiceItems()->delete();
+            $subtotalItems = 0;
+            foreach ($validatedData['items'] as $itemData) {
+                $subtotal = (float)$itemData['quantity'] * (float)$itemData['price'];
+                $invoice->invoiceItems()->create([
+                    'item_name' => $itemData['item_name'],
+                    'quantity'  => $itemData['quantity'],
+                    'unit'      => $itemData['unit'],
+                    'price'     => $itemData['price'],
+                    'subtotal'  => $subtotal,
+                ]);
+                $subtotalItems += $subtotal;
+            }
 
-            // 3. Update detail faktur
-            $invoice->update($request->except(['_token', '_method', 'items', 'reference_images', 'images_to_delete']));
+            // 4. Hitung ulang semua total
+            $discountValue = (float)($validatedData['discount_value'] ?? 0);
+            $discountAmount = ($validatedData['discount_type'] === 'percentage') ? ($subtotalItems * $discountValue) / 100 : $discountValue;
+            $taxBase = $subtotalItems - $discountAmount;
+            $ppnPercentage = (float)($validatedData['ppn_percentage'] ?? 0);
+            $ppnAmount = ($taxBase * $ppnPercentage) / 100;
+            $totalOtherTaxesAmount = 0;
+            $otherTaxesList = [];
+            if (!empty($validatedData['other_taxes'])) {
+                foreach ($validatedData['other_taxes'] as $tax) {
+                    if (!empty($tax['name']) && isset($tax['value'])) {
+                        $taxValue = (float)$tax['value'];
+                        $taxAmount = ($tax['type'] === 'percentage') ? ($taxBase * $taxValue) / 100 : $taxValue;
+                        $otherTaxesList[] = ['name' => $tax['name'], 'type' => $tax['type'], 'value' => $taxValue, 'amount' => $taxAmount];
+                        $totalOtherTaxesAmount += $taxAmount;
+                    }
+                }
+            }
+            $totalAmount = $taxBase + $ppnAmount + $totalOtherTaxesAmount;
 
-            // Note: Logika untuk update item belum diimplementasikan di sini,
-            // karena view Anda menyatakan "belum didukung".
+            // 5. Update data utama faktur
+            $invoice->update([
+                'invoice_number' => $validatedData['invoice_number'],
+                'po_number' => $validatedData['po_number'],
+                'invoice_date' => $validatedData['invoice_date'],
+                'received_date' => $validatedData['received_date'],
+                'due_date' => $validatedData['payment_type'] === 'kredit' ? $validatedData['due_date'] : null,
+                'payment_type' => $validatedData['payment_type'],
+                'subtotal_items' => $subtotalItems,
+                'discount_type' => $validatedData['discount_type'],
+                'discount_value' => $discountValue,
+                'ppn_percentage' => $ppnPercentage,
+                'ppn_amount' => $ppnAmount,
+                'other_taxes' => $otherTaxesList,
+                'total_amount' => $totalAmount,
+            ]);
 
             DB::commit();
             return redirect()->route('invoices.show', $invoice->id)->with('success', 'Faktur berhasil diperbarui.');
@@ -109,7 +164,7 @@ class InvoiceController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Gagal update faktur: ' . $e->getMessage());
-            return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui faktur: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui faktur.');
         }
     }
 

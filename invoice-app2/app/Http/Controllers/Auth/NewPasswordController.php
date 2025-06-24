@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,14 +11,36 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon; // Ditambahkan untuk pengecekan waktu
 
 class NewPasswordController extends Controller
 {
     /**
      * Display the password reset view.
+     * PERBAIKAN: Validasi token sekarang juga memeriksa waktu kedaluwarsa.
      */
-    public function create(Request $request): View
+    public function create(Request $request): View|RedirectResponse
     {
+        // Ambil data token dari database berdasarkan email
+        $tokenData = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->first();
+
+        // Ambil waktu kedaluwarsa dari konfigurasi (default: 60 menit)
+        $expires = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
+
+        // Jika token tidak ada, tidak cocok, atau sudah lewat dari waktu kedaluwarsa, redirect dengan error.
+        if (
+            !$tokenData ||
+            !Hash::check($request->route('token'), $tokenData->token) ||
+            Carbon::parse($tokenData->created_at)->addMinutes($expires)->isPast()
+        ) {
+            return redirect()->route('password.request')
+                ->withErrors(['email' => trans('passwords.token')]);
+        }
+        
+        // Jika valid, tampilkan halaman reset password
         return view('auth.reset-password', ['request' => $request]);
     }
 
@@ -36,14 +57,12 @@ class NewPasswordController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
-        $status = Password::reset(
+        // Attempt to reset the password...
+        $status = Password::broker()->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function (User $user) use ($request) {
+            function ($user, $password) {
                 $user->forceFill([
-                    'password' => Hash::make($request->password),
+                    'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
 
@@ -51,12 +70,14 @@ class NewPasswordController extends Controller
             }
         );
 
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
-        return $status == Password::PASSWORD_RESET
-                    ? redirect()->route('login')->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        // If the password was reset, redirect to the login page with a success message.
+        if ($status === Password::PASSWORD_RESET) {
+            return redirect()->route('login')->with('status', __($status));
+        }
+
+        // If the password reset failed, redirect back with the error message.
+        return back()
+            ->withInput($request->only('email'))
+            ->withErrors(['email' => __($status)]);
     }
 }

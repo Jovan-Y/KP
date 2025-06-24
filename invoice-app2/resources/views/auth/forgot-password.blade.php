@@ -3,9 +3,11 @@
         {{ __('Lupa kata sandi Anda? Tidak masalah. Cukup beri tahu kami alamat email Anda dan kami akan mengirimkan email berisi tautan pengaturan ulang kata sandi yang memungkinkan Anda memilih yang baru.') }}
     </div>
 
+    <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('password.email') }}">
+    {{-- PERUBAHAN DI SINI: Menambahkan atribut 'novalidate' --}}
+    <form method="POST" action="{{ route('password.email') }}" novalidate>
         @csrf
 
         <div>
