@@ -16,14 +16,14 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
                     <x-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">
-                        {{ __('Faktur') }}
+                        {{ __('Daftar Faktur') }}
                     </x-nav-link>
                     @if(Auth::user()->role === 'manager')
                         <x-nav-link :href="route('suppliers.index')" :active="request()->routeIs('suppliers.*')">
-                            {{ __('Supplier') }}
+                            {{ __('Daftar Supplier') }}
                         </x-nav-link>
                         <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                            {{ __('Pegawai') }}
+                            {{ __('Kelola akun') }}
                         </x-nav-link>
                     @endif
                 </div>
