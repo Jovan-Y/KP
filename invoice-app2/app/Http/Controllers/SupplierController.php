@@ -23,18 +23,34 @@ class SupplierController extends Controller
      */
     public function store(Request $request)
     {
-        // Aturan validasi
+        // Aturan validasi dengan pesan kustom
         $validatedData = $request->validate([
             'company_name' => 'required|string|max:255|unique:suppliers,company_name',
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:suppliers,email',
-            // PERUBAHAN DI SINI: Menambahkan aturan 'unique' untuk nomor telepon
-            'phone' => 'nullable|string|max:255|unique:suppliers,phone',
+            'phone' => 'required|string|max:255|unique:suppliers,phone',
             'address' => 'nullable|string',
-            'payment_details' => 'nullable|array',
-            'payment_details.*.bank_name' => 'required_with:payment_details|string|max:255',
-            'payment_details.*.account_name' => 'required_with:payment_details|string|max:255',
-            'payment_details.*.account_number' => 'required_with:payment_details|string|max:255',
+            // --- AWAL PERUBAHAN ATURAN ---
+            'payment_details' => 'required|array',
+            'payment_details.*.bank_name' => 'required|string|max:255',
+            'payment_details.*.account_name' => 'required|string|max:255',
+            'payment_details.*.account_number' => 'required|string|max:255',
+            // --- AKHIR PERUBAHAN ATURAN ---
+        ], [
+            'company_name.required' => 'Nama perusahaan harus diisi.',
+            'company_name.unique'   => 'Nama perusahaan sudah terdaftar.',
+            'name.required'         => 'Nama PIC harus diisi.',
+            'email.required'        => 'Email PIC harus diisi.',
+            'email.email'           => 'Format email tidak valid.',
+            'email.unique'          => 'Email sudah terdaftar.',
+            'phone.required'        => 'Nomor telepon harus diisi.',
+            'phone.unique'          => 'Nomor telepon sudah terdaftar.',
+            // --- AWAL PENAMBAHAN PESAN BARU ---
+            'payment_details.required' => 'Minimal satu detail pembayaran harus diisi.',
+            'payment_details.*.bank_name.required' => 'Nama bank harus diisi.',
+            'payment_details.*.account_name.required' => 'Nama pemilik rekening harus diisi.',
+            'payment_details.*.account_number.required' => 'Nomor rekening harus diisi.',
+            // --- AKHIR PENAMBAHAN PESAN BARU ---
         ]);
 
         try {
@@ -42,7 +58,13 @@ class SupplierController extends Controller
 
             // Jika permintaan datang dari AJAX (fetch)
             if ($request->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Supplier berhasil ditambahkan.']);
+                // Mengambil data supplier terbaru untuk dikirim kembali
+                $latestSupplier = Supplier::latest('id')->first();
+                return response()->json([
+                    'success' => true, 
+                    'message' => 'Supplier berhasil ditambahkan.',
+                    'supplier' => $latestSupplier // Mengirim data supplier baru
+                ]);
             }
             
             return redirect()->route('suppliers.index')->with('success', 'Supplier berhasil ditambahkan.');

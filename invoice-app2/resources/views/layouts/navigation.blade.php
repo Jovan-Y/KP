@@ -15,12 +15,9 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">
-                        {{ __('Daftar Faktur') }}
-                    </x-nav-link>
                     @if(Auth::user()->role === 'manager')
                         <x-nav-link :href="route('suppliers.index')" :active="request()->routeIs('suppliers.*')">
-                            {{ __('Daftar Supplier') }}
+                            {{ __('Kelola Supplier') }}
                         </x-nav-link>
                         <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                             {{ __('Kelola akun') }}

@@ -10,55 +10,69 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <h3 class="text-xl font-bold mb-4">Supplier: {{ $supplier->company_name }}</h3>
-                    <form action="{{ route('invoices.store') }}" method="POST" enctype="multipart/form-data">
+                    
+                    {{-- Form utama --}}
+                    <form action="{{ route('invoices.store') }}" method="POST" enctype="multipart/form-data" novalidate>
                         @csrf
-                        
+                        <input type="hidden" name="supplier_id" value="{{ $supplier->id }}">
+
+                        {{-- Menampilkan Error Global --}}
                         @if (session('error'))
                             <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md" role="alert">
                                 <strong class="font-bold">Terjadi Kesalahan:</strong>
                                 <span class="block sm:inline">{{ session('error') }}</span>
                             </div>
                         @endif
-                        @if ($errors->any())
+                        @if ($errors->any() && !$errors->has('items.*') && !$errors->has('reference_images'))
                             <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md" role="alert">
-                                <strong class="font-bold">Oops! Ada beberapa kesalahan validasi:</strong>
+                                <strong class="font-bold">Oops! Ada beberapa kesalahan:</strong>
                                 <ul class="mt-2 list-disc list-inside">
                                     @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
+                                        @if (!Str::startsWith($error, 'The items') && !Str::startsWith($error, 'The reference images'))
+                                            <li>{{ $error }}</li>
+                                        @endif
                                     @endforeach
                                 </ul>
                             </div>
                         @endif
 
+                        {{-- Data lama dan error untuk JavaScript --}}
                         <div id="old-input-data"
-                             data-old-items="{{ json_encode(old('items', [])) }}"
-                             data-old-taxes="{{ json_encode(old('other_taxes', [])) }}">
+                             data-old-items="{{ json_encode(old('items', [['item_name' => '', 'quantity' => 1, 'unit' => 'Pcs', 'price' => 0]])) }}"
+                             data-old-taxes="{{ json_encode(old('other_taxes', [])) }}"
+                             data-errors="{{ json_encode($errors->toArray()) }}">
                         </div>
+
 
                         {{-- Informasi Dasar Faktur --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div>
                                 <x-input-label for="invoice_number" value="Nomor Faktur" />
-                                <x-text-input id="invoice_number" class="block mt-1 w-full" type="text" name="invoice_number" :value="old('invoice_number')" required />
+                                <x-text-input id="invoice_number" class="block mt-1 w-full" type="text" name="invoice_number" :value="old('invoice_number')" />
+                                <x-input-error class="mt-2" :messages="$errors->get('invoice_number')" />
                             </div>
-                             <div>
+                            <div>
                                 <x-input-label for="po_number" value="Nomor PO (Opsional)" />
                                 <x-text-input id="po_number" class="block mt-1 w-full" type="text" name="po_number" :value="old('po_number')" />
+                                <x-input-error class="mt-2" :messages="$errors->get('po_number')" />
                             </div>
                             <div>
                                 <x-input-label for="invoice_date" value="Tanggal Faktur" />
-                                <x-text-input id="invoice_date" class="block mt-1 w-full" type="date" name="invoice_date" :value="old('invoice_date')" required />
+                                <x-text-input id="invoice_date" class="block mt-1 w-full" type="date" name="invoice_date" :value="old('invoice_date')" />
+                                <x-input-error class="mt-2" :messages="$errors->get('invoice_date')" />
                             </div>
                             <div>
                                 <x-input-label for="received_date" value="Tanggal Diterima" />
-                                <x-text-input id="received_date" class="block mt-1 w-full" type="date" name="received_date" :value="old('received_date')" required />
+                                <x-text-input id="received_date" class="block mt-1 w-full" type="date" name="received_date" :value="old('received_date')" />
+                                <x-input-error class="mt-2" :messages="$errors->get('received_date')" />
                             </div>
                             <div id="due_date_wrapper">
                                 <x-input-label for="due_date" value="Jatuh Tempo" />
                                 <x-text-input id="due_date" class="block mt-1 w-full" type="date" name="due_date" :value="old('due_date')" />
+                                <x-input-error class="mt-2" :messages="$errors->get('due_date')" />
                             </div>
                             <div class="md:col-span-3">
-                                <x-input-label value="Detail Pembayaran" />
+                                <x-input-label value="Jenis Pembayaran" />
                                 <div class="flex items-center space-x-4 mt-1">
                                     <label class="flex items-center">
                                         <input type="radio" name="payment_type" value="debit" class="payment-type-radio text-indigo-600 focus:ring-indigo-500" {{ old('payment_type', 'kredit') == 'debit' ? 'checked' : '' }}>
@@ -69,6 +83,7 @@
                                         <span class="ml-2 text-sm text-gray-600">Kredit</span>
                                     </label>
                                 </div>
+                                <x-input-error class="mt-2" :messages="$errors->get('payment_type')" />
                             </div>
                         </div>
 
@@ -89,6 +104,7 @@
                                 <tbody class="bg-white"></tbody>
                             </table>
                         </div>
+                        <x-input-error class="mt-2" :messages="$errors->get('items')" />
                         <div class="mt-4 flex justify-end">
                             <button type="button" onclick="addItem()" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500">
                                 Tambah Barang
@@ -108,10 +124,12 @@
                                         </select>
                                         <x-text-input id="discount_value" class="block w-full" type="number" name="discount_value" :value="old('discount_value', 0)" min="0" oninput="calculateTotal()" />
                                     </div>
+                                    <x-input-error class="mt-2" :messages="$errors->get('discount_value')" />
                                 </div>
                                 <div class="mb-4">
                                     <x-input-label for="ppn_percentage" value="PPN (%)" />
                                     <x-text-input id="ppn_percentage" class="block mt-1 w-full" type="number" name="ppn_percentage" :value="old('ppn_percentage', 11)" step="0.01" min="0" max="100" oninput="calculateTotal()" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('ppn_percentage')" />
                                 </div>
                                 <div>
                                     <label class="font-medium text-sm text-gray-700">Pajak Lainnya</label>
@@ -142,6 +160,7 @@
                                 <div id="reference_images_container" class="space-y-4">
                                     {{-- Input file akan ditambahkan di sini oleh JavaScript --}}
                                 </div>
+                                <x-input-error class="mt-2" :messages="$errors->get('reference_images')" />
                                 <button type="button" onclick="addReferenceImage()" class="mt-4 inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-500">
                                     Tambah File Gambar
                                 </button>
@@ -159,30 +178,31 @@
         </div>
     </div>
     
-
     @push('scripts')
     <script>
         let itemIndex = 0;
         let taxIndex = 0;
-        let imageIndex = 0; // Counter untuk gambar
-
+        let imageIndex = 0;
+        
         document.addEventListener('DOMContentLoaded', () => {
             const dataElement = document.getElementById('old-input-data');
             const oldItems = JSON.parse(dataElement.dataset.oldItems || '[]');
             const oldTaxes = JSON.parse(dataElement.dataset.oldTaxes || '[]');
+            // --- AWAL PERUBAHAN ---
+            const validationErrors = JSON.parse(dataElement.dataset.errors || '{}');
+            // --- AKHIR PERUBAHAN ---
 
             if (oldItems && oldItems.length > 0) {
-                oldItems.forEach(itemData => addItem(itemData));
+                oldItems.forEach(itemData => addItem(itemData, validationErrors));
             } else {
-                addItem(); 
+                addItem({}, validationErrors); 
             }
 
             if (oldTaxes && oldTaxes.length > 0) {
                 oldTaxes.forEach(taxData => addOtherTax(taxData));
             }
             
-            addReferenceImage(); // Tambah input file pertama saat halaman dimuat
-
+            addReferenceImage();
             calculateTotal(); 
 
             const paymentTypeRadios = document.querySelectorAll('.payment-type-radio');
@@ -191,15 +211,12 @@
 
             function toggleDueDate() {
                 const selectedRadio = document.querySelector('.payment-type-radio:checked');
-                if (selectedRadio) {
-                    const selectedPayment = selectedRadio.value;
-                    if (selectedPayment === 'debit') {
-                        dueDateWrapper.style.display = 'none';
-                        dueDateInput.removeAttribute('required');
-                    } else {
-                        dueDateWrapper.style.display = 'block';
-                        dueDateInput.setAttribute('required', 'required');
-                    }
+                if (selectedRadio && selectedRadio.value === 'debit') {
+                    dueDateWrapper.style.display = 'none';
+                    dueDateInput.removeAttribute('required');
+                } else {
+                    dueDateWrapper.style.display = 'block';
+                    dueDateInput.setAttribute('required', 'required');
                 }
             }
             paymentTypeRadios.forEach(radio => radio.addEventListener('change', toggleDueDate));
@@ -208,25 +225,50 @@
 
         function formatCurrency(value) { return `Rp ${new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}`; }
 
-        function addItem(data = {}) {
+        function addItem(data = {}, errors = {}) {
             const tableBody = document.querySelector('#items_table tbody');
             const newRow = document.createElement('tr');
-            newRow.id = `item_row_${itemIndex}`;
+            const currentIndex = itemIndex;
+            newRow.id = `item_row_${currentIndex}`;
+            
             newRow.innerHTML = `
-                <td class="px-1 py-2"><input type="text" name="items[${itemIndex}][item_name]" value="${data.item_name || ''}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" required /></td>
-                <td class="px-1 py-2" style="width: 100px;"><input type="number" name="items[${itemIndex}][quantity]" value="${data.quantity || 1}" min="1" oninput="calculateSubtotal(${itemIndex})" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" required /></td>
-                <td class="px-1 py-2" style="width: 120px;"><input type="text" name="items[${itemIndex}][unit]" value="${data.unit || 'Pcs'}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" required /></td>
-                <td class="px-1 py-2" style="width: 150px;"><input type="number" name="items[${itemIndex}][price]" value="${data.price || 0}" step="0.01" min="0" oninput="calculateSubtotal(${itemIndex})" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" required /></td>
-                <td class="px-1 py-2 text-sm whitespace-nowrap"><span id="subtotal_${itemIndex}">Rp 0,00</span></td>
-                <td class="px-1 py-2 text-center"><button type="button" onclick="removeItem(${itemIndex})" class="text-red-500 hover:text-red-700">&times;</button></td>
+                <td class="px-1 py-2">
+                    <input type="text" name="items[${currentIndex}][item_name]" value="${data.item_name || ''}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" />
+                    <div id="items.${currentIndex}.item_name_error" class="text-red-500 text-xs mt-1"></div>
+                </td>
+                <td class="px-1 py-2" style="width: 100px;">
+                    <input type="number" name="items[${currentIndex}][quantity]" value="${data.quantity || 1}" min="1" oninput="calculateSubtotal(${currentIndex})" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" />
+                    <div id="items.${currentIndex}.quantity_error" class="text-red-500 text-xs mt-1"></div>
+                </td>
+                <td class="px-1 py-2" style="width: 120px;">
+                    <input type="text" name="items[${currentIndex}][unit]" value="${data.unit || 'Pcs'}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" />
+                    <div id="items.${currentIndex}.unit_error" class="text-red-500 text-xs mt-1"></div>
+                </td>
+                <td class="px-1 py-2" style="width: 150px;">
+                    <input type="number" name="items[${currentIndex}][price]" value="${data.price || 0}" step="0.01" min="0" oninput="calculateSubtotal(${currentIndex})" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" />
+                    <div id="items.${currentIndex}.price_error" class="text-red-500 text-xs mt-1"></div>
+                </td>
+                <td class="px-1 py-2 text-sm whitespace-nowrap"><span id="subtotal_${currentIndex}">Rp 0,00</span></td>
+                <td class="px-1 py-2 text-center"><button type="button" onclick="removeItem(${currentIndex})" class="text-red-500 hover:text-red-700">&times;</button></td>
             `;
+
             tableBody.appendChild(newRow);
-            calculateSubtotal(itemIndex);
+
+            ['item_name', 'quantity', 'unit', 'price'].forEach(field => {
+                const errorKey = `items.${currentIndex}.${field}`;
+                if (errors[errorKey]) {
+                    const errorElement = document.getElementById(`${errorKey}_error`);
+                    if (errorElement) {
+                        errorElement.textContent = errors[errorKey][0];
+                    }
+                }
+            });
+
+            calculateSubtotal(currentIndex);
             itemIndex++;
         }
 
         function removeItem(index) { document.getElementById(`item_row_${index}`).remove(); calculateTotal(); }
-
         function addOtherTax(data = {}) {
             const container = document.getElementById('other_taxes_container');
             const newTaxRow = document.createElement('div');
@@ -244,24 +286,18 @@
             container.appendChild(newTaxRow);
             taxIndex++;
         }
-        
         function addReferenceImage() {
             const container = document.getElementById('reference_images_container');
             const newImageRow = document.createElement('div');
             newImageRow.id = `image_row_${imageIndex}`;
             newImageRow.className = 'flex items-center gap-2';
-            // PERUBAHAN DI SINI: Menambahkan atribut 'multiple'
             newImageRow.innerHTML = `
-                <input type="file" name="reference_images[]" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" multiple required>
+                <input type="file" name="reference_images[]" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" multiple>
                 <button type="button" onclick="removeReferenceImage(${imageIndex})" class="text-red-500 hover:text-red-700 font-bold p-1">&times;</button>
             `;
             container.appendChild(newImageRow);
-            if (imageIndex > 0) {
-                newImageRow.querySelector('input').removeAttribute('required');
-            }
             imageIndex++;
         }
-        
         function removeReferenceImage(index) {
             const row = document.getElementById(`image_row_${index}`);
             if (document.getElementById('reference_images_container').children.length > 1) {
@@ -270,28 +306,23 @@
                 alert('Setidaknya satu file gambar wajib diunggah.');
             }
         }
-
         function removeOtherTax(index) { document.getElementById(`tax_row_${index}`).remove(); calculateTotal(); }
-
         function calculateSubtotal(index) {
             const qty = parseFloat(document.querySelector(`input[name="items[${index}][quantity]"]`).value) || 0;
             const price = parseFloat(document.querySelector(`input[name="items[${index}][price]"]`).value) || 0;
             document.getElementById(`subtotal_${index}`).textContent = formatCurrency(qty * price);
             calculateTotal();
         }
-
         function calculateTotal() {
             let subtotalItems = 0;
             document.querySelectorAll('[id^="subtotal_"]').forEach(span => {
                 subtotalItems += parseFloat(span.textContent.replace('Rp ', '').replace(/\./g, '').replace(',', '.')) || 0;
             });
-
             const discountType = document.getElementById('discount_type').value;
             const discountValue = parseFloat(document.getElementById('discount_value').value) || 0;
             let discountAmount = discountType === 'percentage' ? (subtotalItems * discountValue) / 100 : discountValue;
             
             const taxBase = subtotalItems - discountAmount;
-
             const ppnPercentage = parseFloat(document.getElementById('ppn_percentage').value) || 0;
             const ppnAmount = (taxBase * ppnPercentage) / 100;
             
@@ -310,9 +341,7 @@
                     otherTaxesSummaryHtml += `<div class="flex justify-between"><span>${nameInput.value} (${label}):</span> <span>${formatCurrency(taxAmount)}</span></div>`;
                 }
             });
-
             const totalAmount = taxBase + ppnAmount + totalOtherTaxesAmount;
-
             document.getElementById('display_subtotal_items').textContent = formatCurrency(subtotalItems);
             document.getElementById('display_discount').textContent = `- ${formatCurrency(discountAmount)}`;
             document.getElementById('display_tax_base').textContent = formatCurrency(taxBase);

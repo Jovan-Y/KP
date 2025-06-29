@@ -7,6 +7,9 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            {{-- Notifikasi Sukses atau Error --}}
+            <div id="page-notification" class="mb-4 hidden"></div>
+
             @if (session('success'))
                 <div class="mb-4 p-4 bg-green-100 text-green-700 rounded-md">{{ session('success') }}</div>
             @endif
@@ -26,9 +29,12 @@
                         </button>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    {{-- AWAL PERUBAHAN: Menambahkan pembungkus dengan tinggi maksimal dan scroll --}}
+                    <div class="overflow-auto relative max-h-[80vh]">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                            {{-- AWAL PERUBAHAN: Membuat header tabel tetap di atas saat scroll --}}
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                            {{-- AKHIR PERUBAHAN --}}
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kontak</th>
@@ -71,31 +77,34 @@
                             </tbody>
                         </table>
                     </div>
+                     {{-- AKHIR PERUBAHAN --}}
                 </div>
             </div>
         </div>
     </div>
 
+    {{-- Modal Tambah Supplier --}}
     <div id="supplierModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" style="z-index: 1000;">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
             <h3 class="text-lg font-bold mb-4">Tambah Supplier Baru</h3>
             <div id="modal_error_notification" class="hidden mb-4 p-3 bg-red-100 border border-red-200 text-red-800 rounded-md text-sm"></div>
-            {{-- PERUBAHAN DI SINI: Menambahkan atribut 'novalidate' --}}
+            
             <form id="addSupplierForm" onsubmit="handleSupplierSubmit(event)" novalidate>
                 <div class="space-y-4">
+                    {{-- Input Fields --}}
                     <div>
                         <x-input-label for="new_company_name" value="Nama Perusahaan" />
-                        <x-text-input id="new_company_name" class="block mt-1 w-full" type="text" name="company_name" required />
+                        <x-text-input id="new_company_name" class="block mt-1 w-full" type="text" name="company_name" />
                         <p class="text-red-500 text-xs mt-1" id="company_name_error"></p>
                     </div>
                     <div>
                         <x-input-label for="new_name" value="Nama Kontak (PIC)" />
-                        <x-text-input id="new_name" class="block mt-1 w-full" type="text" name="name" required autofocus />
+                        <x-text-input id="new_name" class="block mt-1 w-full" type="text" name="name" />
                         <p class="text-red-500 text-xs mt-1" id="name_error"></p>
                     </div>
                     <div>
                         <x-input-label for="new_email" value="Email Supplier" />
-                        <x-text-input id="new_email" class="block mt-1 w-full" type="email" name="email" required />
+                        <x-text-input id="new_email" class="block mt-1 w-full" type="email" name="email" />
                         <p class="text-red-500 text-xs mt-1" id="email_error"></p>
                     </div>
                     <div>
@@ -104,23 +113,26 @@
                         <p class="text-red-500 text-xs mt-1" id="phone_error"></p>
                     </div>
                     <div>
-                        <x-input-label for="new_address" value="Alamat Supplier" />
+                        <x-input-label for="new_address" value="Alamat Supplier (opsional)" />
                         <textarea id="new_address" name="address" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" rows="3"></textarea>
+                        <p class="text-red-500 text-xs mt-1" id="address_error"></p>
                     </div>
+
+                    {{-- Detail Pembayaran --}}
                     <div class="mt-4 border-t pt-4">
                         <label class="font-medium text-sm text-gray-700">Detail Pembayaran</label>
                         <div class="mt-2 space-y-2">
                             <div class="flex items-start gap-2">
                                 <div class="flex-1">
-                                    <input type="text" name="payment_details[0][bank_name]" placeholder="Nama Bank" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" required>
+                                    <input type="text" name="payment_details[0][bank_name]" placeholder="Nama Bank" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
                                     <p class="text-red-500 text-xs mt-1" id="payment_details.0.bank_name_error"></p>
                                 </div>
                                 <div class="flex-1">
-                                    <input type="text" name="payment_details[0][account_number]" placeholder="Nomor Rekening" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" required>
+                                    <input type="text" name="payment_details[0][account_number]" placeholder="Nomor Rekening" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
                                     <p class="text-red-500 text-xs mt-1" id="payment_details.0.account_number_error"></p>
                                 </div>
                                 <div class="flex-1">
-                                    <input type="text" name="payment_details[0][account_name]" placeholder="Atas Nama" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" required>
+                                    <input type="text" name="payment_details[0][account_name]" placeholder="Atas Nama" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
                                     <p class="text-red-500 text-xs mt-1" id="payment_details.0.account_name_error"></p>
                                 </div>
                             </div>
@@ -138,6 +150,7 @@
     @push('scripts')
     <script>
         const errorNotification = document.getElementById('modal_error_notification');
+        const pageNotification = document.getElementById('page-notification');
 
         function openSupplierModal() { document.getElementById('supplierModal').classList.remove('hidden'); }
         function closeSupplierModal() {
@@ -149,6 +162,15 @@
         function resetErrors() {
             if(errorNotification) errorNotification.classList.add('hidden');
             document.querySelectorAll('p[id$="_error"]').forEach(el => el.textContent = '');
+        }
+
+        function showPageNotification(message, isSuccess = true) {
+            pageNotification.textContent = message;
+            pageNotification.className = `mb-4 p-4 rounded-md ${isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+            pageNotification.classList.remove('hidden');
+            setTimeout(() => {
+                pageNotification.classList.add('hidden');
+            }, 3000);
         }
 
         function handleSupplierSubmit(event) {
@@ -168,7 +190,6 @@
             })
             .then(response => {
                 if (!response.ok) {
-                    // Jika response tidak OK (misal: 422), kita tetap proses sebagai JSON
                     return response.json().then(err => Promise.reject(err));
                 }
                 return response.json();
@@ -176,28 +197,36 @@
             .then(data => {
                 if (data.success) {
                     closeSupplierModal();
-                    // Menggunakan alert bawaan browser karena lebih sederhana
-                    alert('Supplier berhasil ditambahkan!');
-                    location.reload(); 
+                    // Opsi 1: Tampilkan notifikasi dan reload
+                    showPageNotification(data.message, true);
+                    setTimeout(() => location.reload(), 1500);
+                    
+                    // Opsi 2 (jika tidak ingin reload): Tambahkan baris baru ke tabel secara dinamis
+                    // Ini lebih kompleks tetapi memberikan pengalaman pengguna yang lebih baik
                 }
             })
             .catch(errorData => {
-                 if (errorData.errors) {
+                 if (errorData && errorData.errors) {
                     if(errorNotification) {
                         errorNotification.textContent = 'Gagal menyimpan. Silakan periksa kembali isian Anda.';
                         errorNotification.classList.remove('hidden');
                     }
                     
                     for (const key in errorData.errors) {
-                        const errorElement = document.getElementById(key.replace(/\./g, '\\.') + '_error');
+                        // Kunci error (key) adalah "payment_details.0.bank_name"
+                        // ID elemen error adalah "payment_details.0.bank_name_error"
+                        const errorElement = document.getElementById(key + '_error');
                         if (errorElement) {
                             errorElement.textContent = errorData.errors[key][0];
                         }
                     }
-                } else {
+                 } else {
                     console.error('Error:', errorData);
-                    alert('Terjadi kesalahan yang tidak terduga.');
-                }
+                    if(errorNotification) {
+                        errorNotification.textContent = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
+                        errorNotification.classList.remove('hidden');
+                    }
+                 }
             });
         }
     </script>

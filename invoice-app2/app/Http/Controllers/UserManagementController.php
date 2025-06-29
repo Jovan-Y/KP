@@ -34,12 +34,23 @@ class UserManagementController extends Controller
      */
     public function store(Request $request)
     {
+        // --- AWAL PERUBAHAN ---
+        // Menambahkan pesan validasi kustom pada aturan yang sudah ada
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', Rule::in(['manager', 'employee'])],
+        ], [
+            'name.required' => 'Nama lengkap harus diisi.',
+            'email.required' => 'Email harus diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah terdaftar, silakan gunakan email lain.',
+            'password.required' => 'Password harus diisi.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'role.required' => 'Peran akun harus dipilih.',
         ]);
+        // --- AKHIR PERUBAHAN ---
 
         User::create([
             'name' => $request->name,
