@@ -14,8 +14,6 @@
                     <form action="{{ route('invoices.update', $invoice->id) }}" method="POST" enctype="multipart/form-data" novalidate>
                         @csrf
                         @method('PUT')
-                        
-                        {{-- Menampilkan error jika ada --}}
                         @if ($errors->any())
                             <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md" role="alert">
                                 <strong class="font-bold">Oops! Ada beberapa kesalahan:</strong>
@@ -26,15 +24,13 @@
                                 </ul>
                             </div>
                         @endif
-                        
-                        {{-- Data lama untuk JavaScript --}}
+
                         <div id="old-input-data"
                              data-old-items="{{ json_encode(old('items', $invoice->invoiceItems->toArray())) }}"
                              data-old-taxes="{{ json_encode(old('other_taxes', $invoice->other_taxes)) }}">
                         </div>
                         <input type="hidden" name="images_to_delete" id="images_to_delete_input">
 
-                        {{-- Informasi Dasar Faktur --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div>
                                 <x-input-label for="invoice_number" value="Nomor Faktur" />
@@ -71,7 +67,6 @@
                             </div>
                         </div>
 
-                        {{-- Daftar Barang --}}
                         <h3 class="text-lg font-bold mt-8 mb-4 border-t pt-6">Daftar Barang</h3>
                         <div class="overflow-x-auto">
                             <table class="min-w-full" id="items_table">
@@ -94,7 +89,6 @@
                             </button>
                         </div>
 
-                        {{-- Perhitungan & Pajak --}}
                         <h3 class="text-lg font-bold mt-8 mb-4 border-t pt-6">Perhitungan</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                             <div>
@@ -134,7 +128,6 @@
                             </div>
                         </div>
 
-                        {{-- BAGIAN GAMBAR FAKTUR (REFERENSI) --}}
                         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-8">
                             <div class="p-6">
                                 <h4 class="text-lg font-bold mb-4 text-gray-900">Gambar Faktur</h4>

@@ -47,41 +47,26 @@ class Invoice extends Model
         'other_taxes' => 'array',
     ];
 
-    /**
-     * Get the supplier that owns the invoice.
-     */
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
     }
 
-    /**
-     * Get the items for the invoice.
-     */
     public function invoiceItems()
     {
         return $this->hasMany(InvoiceItem::class);
     }
 
-    /**
-     * Get all images for the invoice.
-     */
     public function invoiceImages()
     {
         return $this->hasMany(InvoiceImage::class);
     }
 
-    /**
-     * Get only the reference images for the invoice.
-     */
     public function referenceImages()
     {
         return $this->hasMany(InvoiceImage::class)->where('type', 'reference');
     }
 
-    /**
-     * Get only the payment proof images for the invoice.
-     */
     public function paymentProofImages()
     {
         return $this->hasMany(InvoiceImage::class)->where('type', 'payment_proof');

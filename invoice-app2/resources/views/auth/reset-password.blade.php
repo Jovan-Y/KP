@@ -1,5 +1,4 @@
 <x-guest-layout>
-    {{-- PERUBAHAN DI SINI: Menambahkan atribut 'novalidate' --}}
     <form method="POST" action="{{ route('password.store') }}" novalidate>
         @csrf
 
@@ -9,7 +8,6 @@
         <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            {{-- PERUBAHAN DI SINI: Menambahkan atribut 'readonly' dan styling untuk field email --}}
             <x-text-input 
                 id="email" 
                 class="block mt-1 w-full bg-gray-100" 

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-use App\Models\User; // Pastikan User model di-import
+use App\Models\User; 
 
 class PasswordResetLinkController extends Controller
 {
@@ -32,15 +32,11 @@ class PasswordResetLinkController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if ($user) {
-            // =================================================================
-            // PERBAIKAN FINAL: Membandingkan dengan "active" sesuai hasil debug
-            // =================================================================
             if (strcasecmp($user->status ?? '', 'active') !== 0) {
                  return back()->withErrors(['email' => 'Akun ini telah dinonaktifkan dan tidak dapat mengatur ulang kata sandi.']);
             }
         }
         
-        // Melanjutkan proses pengiriman link jika statusnya 'active'
         $status = Password::sendResetLink($request->only('email'));
 
         if ($status === Password::RESET_LINK_SENT) {

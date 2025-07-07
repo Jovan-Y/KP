@@ -9,33 +9,29 @@ use Illuminate\Validation\Rule;
 
 class SupplierController extends Controller
 {
-    /**
-     * Menampilkan daftar semua supplier.
-     */
+
     public function index()
     {
         $suppliers = Supplier::latest()->get();
         return view('suppliers.index', compact('suppliers'));
     }
 
-    /**
-     * Menyimpan supplier baru ke database.
-     */
+
     public function store(Request $request)
     {
-        // Aturan validasi dengan pesan kustom
+
         $validatedData = $request->validate([
             'company_name' => 'required|string|max:255|unique:suppliers,company_name',
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:suppliers,email',
             'phone' => 'required|string|max:255|unique:suppliers,phone',
             'address' => 'nullable|string',
-            // --- AWAL PERUBAHAN ATURAN ---
+
             'payment_details' => 'required|array',
             'payment_details.*.bank_name' => 'required|string|max:255',
             'payment_details.*.account_name' => 'required|string|max:255',
             'payment_details.*.account_number' => 'required|string|max:255',
-            // --- AKHIR PERUBAHAN ATURAN ---
+
         ], [
             'company_name.required' => 'Nama perusahaan harus diisi.',
             'company_name.unique'   => 'Nama perusahaan sudah terdaftar.',
@@ -45,25 +41,22 @@ class SupplierController extends Controller
             'email.unique'          => 'Email sudah terdaftar.',
             'phone.required'        => 'Nomor telepon harus diisi.',
             'phone.unique'          => 'Nomor telepon sudah terdaftar.',
-            // --- AWAL PENAMBAHAN PESAN BARU ---
+
             'payment_details.required' => 'Minimal satu detail pembayaran harus diisi.',
             'payment_details.*.bank_name.required' => 'Nama bank harus diisi.',
             'payment_details.*.account_name.required' => 'Nama pemilik rekening harus diisi.',
             'payment_details.*.account_number.required' => 'Nomor rekening harus diisi.',
-            // --- AKHIR PENAMBAHAN PESAN BARU ---
+
         ]);
 
         try {
             Supplier::create($validatedData);
-
-            // Jika permintaan datang dari AJAX (fetch)
             if ($request->wantsJson()) {
-                // Mengambil data supplier terbaru untuk dikirim kembali
                 $latestSupplier = Supplier::latest('id')->first();
                 return response()->json([
                     'success' => true, 
                     'message' => 'Supplier berhasil ditambahkan.',
-                    'supplier' => $latestSupplier // Mengirim data supplier baru
+                    'supplier' => $latestSupplier 
                 ]);
             }
             
@@ -80,15 +73,10 @@ class SupplierController extends Controller
         }
     }
 
-    /**
-     * Menghapus supplier.
-     */
+
     public function destroy(Supplier $supplier)
     {
         try {
-            // Logika untuk menghapus faktur terkait jika diperlukan
-            // $supplier->invoices()->delete();
-            
             $supplier->delete();
             return redirect()->route('suppliers.index')->with('success', 'Supplier berhasil dihapus.');
         } catch (\Exception $e) {

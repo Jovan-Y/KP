@@ -34,8 +34,6 @@ class UserManagementController extends Controller
      */
     public function store(Request $request)
     {
-        // --- AWAL PERUBAHAN ---
-        // Menambahkan pesan validasi kustom pada aturan yang sudah ada
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
@@ -50,25 +48,22 @@ class UserManagementController extends Controller
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
             'role.required' => 'Peran akun harus dipilih.',
         ]);
-        // --- AKHIR PERUBAHAN ---
+
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
-            'status' => 'active', // Default status saat dibuat adalah aktif
+            'status' => 'active', 
         ]);
 
         return back()->with('success', 'Akun berhasil ditambahkan.');
     }
 
-    /**
-     * Mengubah status akun (aktif/tidak aktif).
-     */
+    //Mengubah status akun (aktif/tidak aktif).
     public function updateStatus(User $user)
     {
-        // Pastikan manajer tidak bisa menonaktifkan akunnya sendiri
         if ($user->id === Auth::id()) {
             return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
         }

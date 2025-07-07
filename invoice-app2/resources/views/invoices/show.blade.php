@@ -212,7 +212,7 @@
                     </div>
                 </div>
 
-                {{-- KOLOM KANAN: KHUSUS GAMBAR REFERENSI --}}
+                {{-- KHUSUS GAMBAR REFERENSI --}}
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                          <h4 class="text-lg font-bold mb-4 text-gray-900">Gambar Faktur</h4>

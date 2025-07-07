@@ -14,13 +14,13 @@ class Supplier extends Model
         'phone',
         'company_name',
         'address',
-        'payment_details', // DITAMBAHKAN
+        'payment_details', 
         'email',
     ];
     
 
     // Cast ini secara otomatis mengubah JSON dari DB menjadi array, dan sebaliknya.
     protected $casts = [
-        'payment_details' => 'array', // DITAMBAHKAN
+        'payment_details' => 'array', 
     ];
 }

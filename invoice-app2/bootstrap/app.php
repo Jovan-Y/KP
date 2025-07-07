@@ -12,20 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Ini adalah tempat Anda mendaftarkan middleware Anda
-        // Contoh untuk middleware role yang kita buat:
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckUserRole::class,
         ]);
 
-        // Anda juga bisa menambahkan middleware ke grup web
         $middleware->web(append: [
-            // Contoh middleware lain yang ingin Anda tambahkan ke grup 'web'
-            // \App\Http\Middleware\ExampleWebMiddleware::class,
+
         ]);
 
-        // Jika Anda punya middleware global, bisa juga di sini
-        // $middleware->append(\App\Http\Middleware\LogRequests::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

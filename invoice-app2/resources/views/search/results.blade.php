@@ -19,8 +19,7 @@
                             @if(!empty($searchCriteria['invoice_number']))
                                 <li>Nomor Faktur mengandung: <strong>{{ $searchCriteria['invoice_number'] }}</strong></li>
                             @endif
-                            
-                            {{-- Menampilkan nama supplier yang dipilih --}}
+
                             @if(!empty($searchCriteria['supplier_id']))
                                 @php
                                     $selectedSupplier = $suppliers->firstWhere('id', $searchCriteria['supplier_id']);

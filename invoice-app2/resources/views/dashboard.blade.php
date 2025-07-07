@@ -82,7 +82,6 @@
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <p class="font-bold">{{ $invoice->invoice_number }}</p>
-                                        {{-- PERUBAHAN: Logika Tampilan Hari Lebih Andal --}}
                                         <p class="text-sm text-orange-500 font-semibold">{{ $invoice->supplier->company_name }} - 
                                             @php
                                                 $dueDate = \Carbon\Carbon::parse($invoice->due_date);

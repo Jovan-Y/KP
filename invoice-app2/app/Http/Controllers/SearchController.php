@@ -8,18 +8,13 @@ use Illuminate\Http\Request;
 
 class SearchController extends Controller
 {
-    /**
-     * Menampilkan halaman form pencarian.
-     */
+
     public function index()
     {
         $suppliers = Supplier::orderBy('company_name')->get();
         return view('search.index', compact('suppliers'));
     }
 
-    /**
-     * Memproses pencarian dan menampilkan hasilnya.
-     */
     public function results(Request $request)
     {
         $request->validate([
@@ -34,7 +29,6 @@ class SearchController extends Controller
             return $query->where('invoice_number', 'like', "%{$invoiceNumber}%");
         });
 
-        // Logika diubah untuk mencari berdasarkan ID supplier dari dropdown
         $query->when($request->supplier_id, function ($query, $supplierId) {
             return $query->where('supplier_id', $supplierId);
         });
@@ -54,7 +48,7 @@ class SearchController extends Controller
 
         $invoices = $query->orderBy('invoice_date', 'desc')->paginate(15)->withQueryString();
         
-        // Kirim semua supplier agar bisa menampilkan nama di halaman hasil
+
         $suppliers = Supplier::all(); 
         $searchCriteria = $request->only(['invoice_number', 'supplier_id', 'due_date_from', 'due_date_to', 'status']);
 

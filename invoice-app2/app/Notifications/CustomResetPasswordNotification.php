@@ -34,7 +34,6 @@ class CustomResetPasswordNotification extends Notification
 
         $expire = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
 
-        // PERUBAHAN: Menggunakan template email kustom (markdown view)
         return (new MailMessage)
             ->subject(Lang::get('Reset Password Notification'))
             ->markdown('emails.custom_reset_password', [

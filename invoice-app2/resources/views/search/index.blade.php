@@ -10,8 +10,6 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <form action="{{ route('search.results') }}" method="GET">
-                        
-                        {{-- Menampilkan error validasi dari server --}}
                         @if ($errors->any())
                             <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md" role="alert">
                                 <ul class="list-disc list-inside">
@@ -27,8 +25,6 @@
                                 <x-input-label for="invoice_number" value="Nomor Faktur" />
                                 <x-text-input id="invoice_number" class="block mt-1 w-full" type="text" name="invoice_number" :value="request('invoice_number')" />
                             </div>
-                            
-                            {{-- ================= AWAL KODE PERUBAHAN ================= --}}
                             <div>
                                 <x-input-label for="supplier_id" value="Supplier" />
                                 <select id="supplier_id" name="supplier_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
@@ -40,7 +36,6 @@
                                     @endforeach
                                 </select>
                             </div>
-                            {{-- ================= AKHIR KODE PERUBAHAN ================= --}}
                         </div>
 
                         <div class="mt-4">

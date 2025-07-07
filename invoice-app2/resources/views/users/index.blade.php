@@ -7,12 +7,10 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
-            {{-- Notifikasi --}}
             @if (session('success'))
                 <div class="p-4 mb-4 bg-green-100 text-green-700 rounded-md">{{ session('success') }}</div>
             @endif
-            
-            {{-- BLOK ERROR UMUM DIPINDAHKAN KE DALAM MODAL --}}
+
             @if (session('error') && !$errors->any())
                  <div class="p-4 mb-4 bg-red-100 border border-red-400 text-red-700 rounded-md" role="alert">
                     <strong class="font-bold">Oops! Terjadi kesalahan:</strong>
@@ -55,7 +53,6 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            {{-- Mencegah manajer menonaktifkan diri sendiri --}}
                                             @if($manager->id !== auth()->id())
                                                 <form action="{{ route('users.update_status', $manager->id) }}" method="POST" class="inline" onsubmit="return confirm('Anda yakin ingin mengubah status akun ini?');">
                                                     @csrf

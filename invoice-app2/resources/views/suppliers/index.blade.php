@@ -7,7 +7,6 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            {{-- Notifikasi Sukses atau Error --}}
             <div id="page-notification" class="mb-4 hidden"></div>
 
             @if (session('success'))
@@ -29,12 +28,10 @@
                         </button>
                     </div>
 
-                    {{-- AWAL PERUBAHAN: Menambahkan pembungkus dengan tinggi maksimal dan scroll --}}
+                   
                     <div class="overflow-auto relative max-h-[80vh]">
                         <table class="min-w-full divide-y divide-gray-200">
-                            {{-- AWAL PERUBAHAN: Membuat header tabel tetap di atas saat scroll --}}
                             <thead class="bg-gray-50 sticky top-0 z-10">
-                            {{-- AKHIR PERUBAHAN --}}
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kontak</th>
@@ -77,7 +74,6 @@
                             </tbody>
                         </table>
                     </div>
-                     {{-- AKHIR PERUBAHAN --}}
                 </div>
             </div>
         </div>
@@ -91,7 +87,6 @@
             
             <form id="addSupplierForm" onsubmit="handleSupplierSubmit(event)" novalidate>
                 <div class="space-y-4">
-                    {{-- Input Fields --}}
                     <div>
                         <x-input-label for="new_company_name" value="Nama Perusahaan" />
                         <x-text-input id="new_company_name" class="block mt-1 w-full" type="text" name="company_name" />

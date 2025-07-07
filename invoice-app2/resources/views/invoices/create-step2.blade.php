@@ -10,13 +10,11 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <h3 class="text-xl font-bold mb-4">Supplier: {{ $supplier->company_name }}</h3>
-                    
-                    {{-- Form utama --}}
+
                     <form action="{{ route('invoices.store') }}" method="POST" enctype="multipart/form-data" novalidate>
                         @csrf
                         <input type="hidden" name="supplier_id" value="{{ $supplier->id }}">
 
-                        {{-- Menampilkan Error Global --}}
                         @if (session('error'))
                             <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md" role="alert">
                                 <strong class="font-bold">Terjadi Kesalahan:</strong>
@@ -36,7 +34,6 @@
                             </div>
                         @endif
 
-                        {{-- Data lama dan error untuk JavaScript --}}
                         <div id="old-input-data"
                              data-old-items="{{ json_encode(old('items', [['item_name' => '', 'quantity' => 1, 'unit' => 'Pcs', 'price' => 0]])) }}"
                              data-old-taxes="{{ json_encode(old('other_taxes', [])) }}"
@@ -44,7 +41,6 @@
                         </div>
 
 
-                        {{-- Informasi Dasar Faktur --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div>
                                 <x-input-label for="invoice_number" value="Nomor Faktur" />
@@ -87,7 +83,6 @@
                             </div>
                         </div>
 
-                        {{-- Daftar Barang --}}
                         <h3 class="text-lg font-bold mt-8 mb-4 border-t pt-6">Daftar Barang</h3>
                         <div class="overflow-x-auto">
                             <table class="min-w-full" id="items_table">
@@ -111,7 +106,6 @@
                             </button>
                         </div>
 
-                        {{-- Perhitungan & Pajak --}}
                         <h3 class="text-lg font-bold mt-8 mb-4 border-t pt-6">Perhitungan</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                             <div>
@@ -153,12 +147,11 @@
                             </div>
                         </div>
 
-                        {{-- Gambar Referensi --}}
                         <div class="mt-8 border-t pt-6">
                             <h3 class="text-lg font-bold mb-4">Upload Faktur (Wajib)</h3>
                             <div class="p-4 border rounded-md bg-gray-50">
                                 <div id="reference_images_container" class="space-y-4">
-                                    {{-- Input file akan ditambahkan di sini oleh JavaScript --}}
+                                    {{-- tempat input file  --}}
                                 </div>
                                 <x-input-error class="mt-2" :messages="$errors->get('reference_images')" />
                                 <button type="button" onclick="addReferenceImage()" class="mt-4 inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-500">

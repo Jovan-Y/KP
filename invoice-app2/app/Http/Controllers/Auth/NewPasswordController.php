@@ -18,19 +18,15 @@ class NewPasswordController extends Controller
 {
     /**
      * Display the password reset view.
-     * PERBAIKAN: Validasi token sekarang juga memeriksa waktu kedaluwarsa.
      */
     public function create(Request $request): View|RedirectResponse
     {
-        // Ambil data token dari database berdasarkan email
         $tokenData = DB::table('password_reset_tokens')
             ->where('email', $request->email)
             ->first();
 
-        // Ambil waktu kedaluwarsa dari konfigurasi (default: 60 menit)
         $expires = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
 
-        // Jika token tidak ada, tidak cocok, atau sudah lewat dari waktu kedaluwarsa, redirect dengan error.
         if (
             !$tokenData ||
             !Hash::check($request->route('token'), $tokenData->token) ||
@@ -40,7 +36,6 @@ class NewPasswordController extends Controller
                 ->withErrors(['email' => trans('passwords.token')]);
         }
         
-        // Jika valid, tampilkan halaman reset password
         return view('auth.reset-password', ['request' => $request]);
     }
 

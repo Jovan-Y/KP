@@ -34,7 +34,6 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // ================= AWAL KODE PERBAIKAN =================
         // Cari pengguna berdasarkan email yang diinput
         $user = User::where('email', $this->input('email'))->first();
 
@@ -44,7 +43,6 @@ class LoginRequest extends FormRequest
                 'email' => 'Akun Anda tidak aktif. Silakan hubungi manajer.',
             ]);
         }
-        // ================= AKHIR KODE PERBAIKAN =================
 
         // Coba lakukan otentikasi
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {

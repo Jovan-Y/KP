@@ -14,9 +14,7 @@ use Illuminate\Support\Str;
 
 class InvoiceController extends Controller
 {
-    /**
-     * Menampilkan daftar semua faktur.
-     */
+
     public function index()
     {
         $invoices = Invoice::with('supplier')
@@ -25,18 +23,12 @@ class InvoiceController extends Controller
         return view('invoices.index', compact('invoices'));
     }
 
-    /**
-     * Menampilkan halaman pertama pembuatan faktur (pilih supplier).
-     */
     public function createStep1()
     {
         $suppliers = Supplier::all();
         return view('invoices.create-step1', compact('suppliers'));
     }
 
-    /**
-     * Memproses pemilihan supplier dan melanjutkan ke tahap 2.
-     */
     public function postStep1(Request $request)
     {
         $request->validate(
@@ -45,15 +37,10 @@ class InvoiceController extends Controller
         );
         $request->session()->put('supplier_id_for_invoice', $request->input('supplier_id'));
 
-        // --- AWAL PERUBAHAN ---
-        // Menyesuaikan dengan nama rute dari file web.php Anda.
         return redirect()->route('invoices.create.show_step2');
-        // --- AKHIR PERUBAHAN ---
+
     }
 
-    /**
-     * Menampilkan halaman kedua pembuatan faktur (isi detail).
-     */
     public function showStep2(Request $request)
     {
         $supplier_id = $request->session()->get('supplier_id_for_invoice');
@@ -64,9 +51,6 @@ class InvoiceController extends Controller
         return view('invoices.create-step2', compact('supplier'));
     }
 
-    /**
-     * Menyimpan faktur baru ke database.
-     */
     public function store(Request $request)
     {
         $validatedData = $request->validate([
@@ -197,18 +181,12 @@ class InvoiceController extends Controller
         }
     }
 
-    /**
-     * Menampilkan detail satu faktur.
-     */
     public function show(Invoice $invoice)
     {
         $invoice->load('supplier', 'invoiceItems', 'paymentProofImages', 'referenceImages');
         return view('invoices.show', compact('invoice'));
     }
 
-    /**
-     * Menampilkan halaman untuk mengedit faktur.
-     */
     public function edit(Invoice $invoice)
     {
         if ($invoice->is_paid) {
@@ -219,9 +197,6 @@ class InvoiceController extends Controller
         return view('invoices.edit', compact('invoice'));
     }
 
-    /**
-     * Memproses pembaruan data faktur.
-     */
     public function update(Request $request, Invoice $invoice)
     {
         if ($invoice->is_paid) {
@@ -349,10 +324,7 @@ class InvoiceController extends Controller
             return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui faktur.');
         }
     }
-    
-    /**
-     * Menandai faktur sebagai lunas.
-     */
+
     public function markPaid(Request $request, Invoice $invoice)
     {
         if ($invoice->is_paid) {
@@ -389,9 +361,6 @@ class InvoiceController extends Controller
         return back()->with('success', 'Faktur berhasil ditandai lunas.');
     }
 
-    /**
-     * Membatalkan status lunas faktur.
-     */
     public function unmarkPaid(Invoice $invoice)
     {
         if (Auth::user()->role !== 'manager') {
@@ -401,18 +370,12 @@ class InvoiceController extends Controller
         $invoice->update(['is_paid' => false]);
         return back()->with('success', 'Pelunasan faktur berhasil dibatalkan.');
     }
-    
-    /**
-     * Menonaktifkan fitur hapus faktur.
-     */
+
     public function destroy(Invoice $invoice)
     {
         return back()->with('error', 'Fitur hapus faktur telah dinonaktifkan.');
     }
 
-    /**
-     * Mengunggah bukti pembayaran tambahan.
-     */
     public function uploadPaymentProof(Request $request, Invoice $invoice)
     {
         if ($invoice->is_paid) {
@@ -444,9 +407,6 @@ class InvoiceController extends Controller
         return back()->with('error', 'Gagal mengunggah bukti pembayaran.');
     }
 
-    /**
-     * Menghapus gambar dari faktur.
-     */
     public function destroyImage(InvoiceImage $image)
     {
         try {
