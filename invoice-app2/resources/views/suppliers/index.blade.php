@@ -98,7 +98,7 @@
                         <p class="text-red-500 text-xs mt-1" id="name_error"></p>
                     </div>
                     <div>
-                        <x-input-label for="new_email" value="Email Supplier" />
+                        <x-input-label for="new_email" value="Email Supplier (opsional)" />
                         <x-text-input id="new_email" class="block mt-1 w-full" type="email" name="email" />
                         <p class="text-red-500 text-xs mt-1" id="email_error"></p>
                     </div>

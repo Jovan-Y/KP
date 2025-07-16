@@ -25,7 +25,7 @@ class SupplierController extends Controller
             
             'company_name' => 'required|string|max:255|unique:suppliers,company_name',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:suppliers,email', 
+            'email' => 'nullable|email|max:255|unique:suppliers,email', 
             'phone' => 'required|string|max:255|unique:suppliers,phone', 
             'address' => 'nullable|string', 
 
@@ -38,7 +38,6 @@ class SupplierController extends Controller
             'company_name.required' => 'Nama perusahaan harus diisi.',
             'company_name.unique'   => 'Nama perusahaan sudah terdaftar.',
             'name.required'         => 'Nama PIC harus diisi.',
-            'email.required'        => 'Email PIC harus diisi.',
             'email.unique'          => 'Email sudah terdaftar.',
             'phone.required'        => 'Nomor telepon harus diisi.',
             'phone.unique'          => 'Nomor telepon sudah terdaftar.',
