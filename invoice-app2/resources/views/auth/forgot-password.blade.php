@@ -6,7 +6,6 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    {{-- PERUBAHAN DI SINI: Menambahkan atribut 'novalidate' --}}
     <form method="POST" action="{{ route('password.email') }}" novalidate>
         @csrf
 

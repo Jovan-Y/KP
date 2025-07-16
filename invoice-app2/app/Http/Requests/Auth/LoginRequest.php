@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Models\User; // Import User model
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -38,7 +38,9 @@ class LoginRequest extends FormRequest
         $user = User::where('email', $this->input('email'))->first();
 
         // Cek status akun sebelum mencoba otentikasi
+        // Jika pengguna ditemukan DAN statusnya adalah 'inactive'
         if ($user && $user->status === 'inactive') {
+            // Langkah 3: Hentikan proses & lempar pesan error khusus
             throw ValidationException::withMessages([
                 'email' => 'Akun Anda tidak aktif. Silakan hubungi manajer.',
             ]);

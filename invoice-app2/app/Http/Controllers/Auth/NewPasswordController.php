@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Carbon; // Ditambahkan untuk pengecekan waktu
+use Illuminate\Support\Carbon;
 
 class NewPasswordController extends Controller
 {

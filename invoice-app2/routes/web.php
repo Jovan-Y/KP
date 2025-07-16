@@ -15,43 +15,38 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    
-    // Rute Umum
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/search-invoices', [SearchController::class, 'index'])->name('search.index');
     Route::get('/search-invoices/results', [SearchController::class, 'results'])->name('search.results');
     
-    // Alur Tambah Faktur Baru
+    //tambah faktur Baru
     Route::get('/invoices/create/step1', [InvoiceController::class, 'createStep1'])->name('invoices.create.step1');
     Route::post('/invoices/create/step1', [InvoiceController::class, 'postStep1'])->name('invoices.create.post_step1');
     Route::get('/invoices/create/step2', [InvoiceController::class, 'showStep2'])->name('invoices.create.show_step2');
     Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
 
-    // Operasi CRUD untuk faktur
+    //(CR)UD faktur
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
 
     Route::get('/invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');
     Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
     
-    // Pelunasan
+    //pelunasan
     Route::patch('/invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('invoices.markPaid');
+    Route::patch('/invoices/{invoice}/unmark-paid', [InvoiceController::class, 'unmarkPaid'])->name('invoices.unmarkPaid');
     
-    // Gambar 
+    //gambar 
     Route::post('/invoices/{invoice}/upload-payment-proof', [InvoiceController::class, 'uploadPaymentProof'])->name('invoices.uploadPaymentProof');
     Route::delete('/invoices/image/{image}', [InvoiceController::class, 'destroyImage'])->name('invoices.images.destroy');
 
 
-    // GRUP RUTE KHUSUS UNTUK MANAJER 
+    //KHUSUS MANAJER 
     Route::middleware(['role:manager'])->group(function () {
-        
-        //embatalkan pelunasan.
-        Route::patch('/invoices/{invoice}/unmark-paid', [InvoiceController::class, 'unmarkPaid'])->name('invoices.unmarkPaid');
-
-        //Pengelolaan Supplier
+        //pengelolaan Supplier
         Route::resource('suppliers', SupplierController::class)->only(['index', 'store', 'destroy']);
 
-        //Pengelolaan Akun 
+        //pengelolaan Akun 
         Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
         Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
         Route::patch('/users/{user}/status', [UserManagementController::class, 'updateStatus'])->name('users.update_status');

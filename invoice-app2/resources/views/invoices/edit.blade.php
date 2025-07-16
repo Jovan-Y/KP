@@ -214,7 +214,6 @@
         
         calculateTotal(); 
 
-        // Logika untuk menampilkan/menyembunyikan jatuh tempo
         const paymentTypeRadios = document.querySelectorAll('.payment-type-radio');
         const dueDateWrapper = document.getElementById('due_date_wrapper');
         const dueDateInput = document.getElementById('due_date');

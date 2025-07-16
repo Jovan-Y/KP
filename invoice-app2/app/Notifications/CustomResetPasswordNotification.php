@@ -26,7 +26,6 @@ class CustomResetPasswordNotification extends Notification
 
     public function toMail($notifiable)
     {
-        // Membuat URL untuk tautan reset password
         $resetUrl = url(route('password.reset', [
             'token' => $this->token,
             'email' => $notifiable->getEmailForPasswordReset(),
@@ -35,8 +34,8 @@ class CustomResetPasswordNotification extends Notification
         $expire = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
 
         return (new MailMessage)
-            ->subject(Lang::get('Reset Password Notification'))
-            ->markdown('emails.custom_reset_password', [
+            ->subject(Lang::get('Reset Password Notification')) 
+            ->markdown('emails.custom_reset_password', [      
                 'resetUrl' => $resetUrl,
                 'expire' => $expire,
                 'user' => $notifiable

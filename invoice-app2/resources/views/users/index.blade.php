@@ -28,7 +28,6 @@
                 </x-primary-button>
             </div>
 
-            <!-- Tabel Akun Manajer -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <h3 class="text-xl font-bold mb-4">Daftar Akun Manajer</h3>
@@ -71,7 +70,6 @@
                 </div>
             </div>
 
-            <!-- Tabel Akun Pegawai -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <h3 class="text-xl font-bold mb-4">Daftar Akun Pegawai</h3>
@@ -117,7 +115,6 @@
         </div>
     </div>
 
-    {{-- Modal Tambah Akun Baru --}}
     <x-modal name="add-user-modal" focusable>
         <form method="post" action="{{ route('users.store') }}" class="p-6" novalidate>
             @csrf
@@ -169,7 +166,6 @@
     @push('scripts')
         @if ($errors->any())
         <script>
-            // Skrip ini hanya akan dirender jika ada error, menghindari kebingungan pada linter.
             document.addEventListener('DOMContentLoaded', () => {
                 window.dispatchEvent(new CustomEvent('open-modal', { detail: 'add-user-modal' }));
             });

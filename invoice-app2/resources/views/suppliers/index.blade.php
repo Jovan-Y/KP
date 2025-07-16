@@ -192,12 +192,8 @@
             .then(data => {
                 if (data.success) {
                     closeSupplierModal();
-                    // Opsi 1: Tampilkan notifikasi dan reload
                     showPageNotification(data.message, true);
                     setTimeout(() => location.reload(), 1500);
-                    
-                    // Opsi 2 (jika tidak ingin reload): Tambahkan baris baru ke tabel secara dinamis
-                    // Ini lebih kompleks tetapi memberikan pengalaman pengguna yang lebih baik
                 }
             })
             .catch(errorData => {
@@ -208,8 +204,6 @@
                     }
                     
                     for (const key in errorData.errors) {
-                        // Kunci error (key) adalah "payment_details.0.bank_name"
-                        // ID elemen error adalah "payment_details.0.bank_name_error"
                         const errorElement = document.getElementById(key + '_error');
                         if (errorElement) {
                             errorElement.textContent = errorData.errors[key][0];

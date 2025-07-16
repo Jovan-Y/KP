@@ -14,7 +14,7 @@
                         <div class="mb-4">
                             <x-input-label for="supplier_id" value="Pilih Supplier yang Sudah Ada" />
                             <select id="supplier_id" name="supplier_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
-                                <option value="">-- Pilih Supplier --</option>
+                                <option value="">Pilih Supplier</option>
                                 @foreach($suppliers as $supplier)
                                     <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>{{ $supplier->company_name }} ({{ $supplier->name }})</option>
                                 @endforeach

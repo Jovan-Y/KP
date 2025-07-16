@@ -10,7 +10,6 @@
             @if (session('success')) <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded" role="alert"><p>{{ session('success') }}</p></div> @endif
             @if (session('error')) <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded" role="alert"><p>{{ session('error') }}</p></div> @endif
 
-            {{-- BAGIAN 1: DETAIL FAKTUAL & ITEM --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <div class="flex justify-between items-start">
@@ -125,7 +124,7 @@
                 </div>
             </div>
 
-            {{-- BAGIAN 2: TOMBOL AKSI --}}
+            {{-- TOMBOL AKSI --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 flex items-center space-x-4">
                     @if (!$invoice->is_paid)
@@ -151,7 +150,7 @@
                         <p class="text-sm text-gray-500 italic">Unggah bukti pembayaran untuk melunasi faktur.</p>
                     @endif
                     
-                    @if ($invoice->is_paid && Auth::user()->role === 'manager')
+                    @if ($invoice->is_paid)
                         <form action="{{ route('invoices.unmarkPaid', $invoice->id) }}" method="POST" onsubmit="return confirm('Batalkan pelunasan faktur ini?');">
                             @csrf
                             @method('PATCH')
@@ -163,7 +162,7 @@
                 </div>
             </div>
 
-            {{-- BAGIAN 3: GAMBAR-GAMBAR --}}
+            {{-- GAMBAR-GAMBAR --}}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {{-- KOLOM KIRI: KHUSUS BUKTI PEMBAYARAN --}}
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -212,7 +211,6 @@
                     </div>
                 </div>
 
-                {{-- KHUSUS GAMBAR REFERENSI --}}
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                          <h4 class="text-lg font-bold mb-4 text-gray-900">Gambar Faktur</h4>

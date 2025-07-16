@@ -1,9 +1,8 @@
 <?php
 
 use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Middleware; // Pastikan ini di-import
+use Illuminate\Foundation\Configuration\Middleware; 
 use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Routing\Middleware\SubstituteBindings; // Contoh middleware yang mungkin Anda butuhkan
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
