@@ -53,7 +53,8 @@
                                         <div>
                                             <p class="font-bold">{{ $invoice->invoice_number }}</p>
                                             <p class="text-sm text-gray-600">{{ $invoice->supplier->company_name }} - 
-                                                <span class="font-semibold">Lewat {{ now()->startOfDay()->diffInDays($invoice->due_date) }} hari</span>
+                                                
+                                                <span class="font-semibold">Lewat {{ now()->startOfDay()->diffInDays($invoice->due_date->startOfDay()) }} hari</span>
                                             </p>
                                         </div>
                                         <div class="text-right flex-shrink-0 ml-4">
@@ -84,6 +85,7 @@
                                         <p class="font-bold">{{ $invoice->invoice_number }}</p>
                                         <p class="text-sm text-orange-500 font-semibold">{{ $invoice->supplier->company_name }} - 
                                             @php
+                                                // Menggunakan Carbon untuk mempermudah manipulasi tanggal
                                                 $dueDate = \Carbon\Carbon::parse($invoice->due_date);
                                             @endphp
 
@@ -92,7 +94,8 @@
                                             @elseif($dueDate->isTomorrow())
                                                 Jatuh tempo Besok
                                             @else
-                                                Jatuh tempo dalam {{ $dueDate->diffInDays(now()) }} hari
+                                                
+                                                Jatuh tempo dalam {{ $dueDate->startOfDay()->diffInDays(now()->startOfDay()) }} hari
                                             @endif
                                         </p>
                                     </div>
