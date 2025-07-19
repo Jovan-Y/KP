@@ -45,6 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['role:manager'])->group(function () {
         //pengelolaan Supplier
         Route::resource('suppliers', SupplierController::class)->only(['index', 'store', 'destroy']);
+        Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
 
         //pengelolaan Akun 
         Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
