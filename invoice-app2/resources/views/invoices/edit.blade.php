@@ -135,8 +135,8 @@
                                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                                         @foreach($invoice->referenceImages as $image)
                                             <div class="relative group border rounded-lg overflow-hidden shadow-sm">
-                                                <a href="{{ $image->filepath }}" target="_blank">
-                                                    <img src="{{ $image->filepath }}" alt="{{ $image->title ?? $image->filename }}" class="w-full h-32 object-cover">
+                                                <a href="{{ asset('uploads/' . $image->filepath) }}" target="_blank">
+                                                    <img src="{{ asset('uploads/' . $image->filepath) }}" alt="{{ $image->title ?? $image->filename }}" class="w-full h-32 object-cover">
                                                 </a>
                                                 <div onclick="unmarkImageForDeletion(this)" data-image-id="{{ $image->id }}" class="absolute inset-0 bg-red-600 bg-opacity-70 flex-col items-center justify-center text-white hidden cursor-pointer group" title="Batal Hapus">
                                                     <div class="flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">

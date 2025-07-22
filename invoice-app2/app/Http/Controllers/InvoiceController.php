@@ -15,57 +15,42 @@ use Illuminate\Support\Str;
 class InvoiceController extends Controller
 {
 
-    //menampilkan halaman utama yang berisi daftar semua faktur
     public function index()
     {
-        //ambil semua faktur, sertakan data supplier-nya, urutkan dari yang terbaru dengan paginate
         $invoices = Invoice::with('supplier')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-        // kirim data faktur ke tampilan invoices index
         return view('invoices.index', compact('invoices'));
     }
 
-    //menampilkan halaman memilih supplier sebelum membuat faktur
     public function createStep1()
     {
-        $suppliers = Supplier::all(); //ambil semua data supplier
-        return view('invoices.create-step1', compact('suppliers')); //data supplier ke halaman
+        $suppliers = Supplier::all();
+        return view('invoices.create-step1', compact('suppliers'));
     }
 
-    //memproses pilihan supplier dari langkah 1
     public function postStep1(Request $request)
     {
-        //pastikan pengguna sudah memilih supplier
         $request->validate(
             ['supplier_id' => 'required|exists:suppliers,id'],
             ['supplier_id.required' => 'Anda harus memilih supplier terlebih dahulu.']
         );
-        //simpan id supplier yang dipilih ke dalam session
         $request->session()->put('supplier_id_for_invoice', $request->input('supplier_id'));
-
-        //arahkan pengguna ke langkah kedua
         return redirect()->route('invoices.create.show_step2');
     }
 
-    //menampilkan halaman kedua untuk membuat faktur: mengisi detail faktur
     public function showStep2(Request $request)
     {
-        //ambil id supplier dari session.
         $supplier_id = $request->session()->get('supplier_id_for_invoice');
-        // Jika tidak ada , kembalikan ke langkah 1.
         if (!$supplier_id) {
             return redirect()->route('invoices.create.step1')->with('error', 'Silakan pilih supplier terlebih dahulu.');
         }
-        // Cari data supplier berdasarkan ID dan tampilkan form detail faktur.
         $supplier = Supplier::findOrFail($supplier_id);
         return view('invoices.create-step2', compact('supplier'));
     }
 
-    //menyimpan faktur baru ke database 
     public function store(Request $request)
     {
-        // 1. validasi semua input dari form.
         $validatedData = $request->validate([
             'invoice_number' => 'required|string|max:255|unique:invoices,invoice_number',
             'po_number' => 'nullable|string|max:255',
@@ -88,33 +73,26 @@ class InvoiceController extends Controller
             'reference_images' => 'required|array|min:1',
             'reference_images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:5000',
         ], [
-            // pesan error kustom
             'invoice_number.required' => 'Nomor faktur harus diisi.',
             'invoice_number.unique' => 'Nomor faktur ini sudah terdaftar.',
             'invoice_date.required' => 'Tanggal faktur harus diisi.',
             'received_date.required' => 'Tanggal diterima harus diisi.',
             'due_date.required_if' => 'Tanggal jatuh tempo harus diisi untuk pembayaran kredit.',
             'items.required' => 'Faktur harus memiliki setidaknya satu barang.',
-            'items.*.item_name.required' => 'Nama barang wajib diisi.',
-            'items.*.quantity.required' => 'Jumlah barang wajib diisi.',
-            'items.*.unit.required' => 'Satuan barang wajib diisi.',
-            'items.*.price.required' => 'Harga barang wajib diisi.',
             'reference_images.required' => 'Anda wajib mengunggah minimal satu gambar faktur.',
             'reference_images.*.image' => 'File yang diunggah harus berupa gambar.',
             'reference_images.*.mimes' => 'Format gambar harus jpeg, png, jpg, gif, atau svg.',
             'reference_images.*.max' => 'Ukuran gambar maksimal 5MB.',
         ]);
         
-        //ambil id supplier dari session.
         $supplier_id = $request->session()->get('supplier_id_for_invoice');
         if (!$supplier_id) {
             return redirect()->route('invoices.create.step1')->with('error', 'Sesi supplier tidak ditemukan. Silakan mulai lagi.');
         }
 
-        //mulai transaksi database
         DB::beginTransaction();
         try {
-            //2. lakukan semua perhitungan
+            // Perhitungan
             $subtotalItems = 0;
             foreach ($request->input('items', []) as $item) {
                 if (is_array($item) && isset($item['quantity'], $item['price'])) {
@@ -141,7 +119,7 @@ class InvoiceController extends Controller
             }
             $totalAmount = $baseForTax + $ppnAmount + $totalOtherTaxesAmount;
 
-            // 3. simpan data utama faktur ke tabel invoices
+            // Simpan data faktur
             $invoice = Invoice::create([
                 'supplier_id' => $supplier_id,
                 'invoice_number' => $request->input('invoice_number'),
@@ -161,9 +139,9 @@ class InvoiceController extends Controller
                 'public_code' => Str::random(32),
             ]);
 
-            // 4. simpan setiap item barang ke tabel invoice_items
+            // Simpan item barang
             foreach ($request->input('items', []) as $item) {
-                 if (is_array($item)) {
+                if (is_array($item)) {
                     $invoice->invoiceItems()->create([
                         'item_name' => $item['item_name'],
                         'quantity' => $item['quantity'],
@@ -171,18 +149,17 @@ class InvoiceController extends Controller
                         'price' => $item['price'],
                         'subtotal' => (float)($item['quantity'] ?? 0) * (float)($item['price'] ?? 0),
                     ]);
-                 }
+                }
             }
             
-            // 5. unggah dan simpan setiap gambar referensi
+            // UBAH: Unggah dan simpan gambar referensi menggunakan disk 'public_uploads'
             if ($request->hasFile('reference_images')) {
                 foreach ($request->file('reference_images') as $image) {
                     if($image && $image->isValid()){
-                        //simpan file ke storage dan catat path-nya di database
-                        $path = $image->store('invoice_images/' . $invoice->id . '/references', 'public');
+                        $path = $image->store('invoice_images/' . $invoice->id . '/references', 'public_uploads');
                         $invoice->invoiceImages()->create([
                             'filename' => $image->hashName(),
-                            'filepath' => Storage::url($path),
+                            'filepath' => $path, // Simpan path relatif
                             'title'    => $image->getClientOriginalName(),
                             'type'     => 'reference'
                         ]);
@@ -190,48 +167,38 @@ class InvoiceController extends Controller
                 }
             }
 
-            // 6. jika semua berhasil, hapus session dan komit
             $request->session()->forget('supplier_id_for_invoice');
             DB::commit();
             return redirect()->route('invoices.show', $invoice->id)->with('success', 'Faktur berhasil ditambahkan!');
 
         } catch (\Exception $e) {
-            // 7. jika ada error batalkan perubahan
             DB::rollBack();
             Log::error('Gagal menambahkan faktur: ' . $e->getMessage());
             return back()->withInput()->with('error', 'Gagal menambahkan faktur: ' . $e->getMessage());
         }
     }
 
-    //Menampilkan halaman detail untuk satu faktur.
     public function show(Invoice $invoice)
     {
-        //ambil data faktur beserta relasinya
         $invoice->load('supplier', 'invoiceItems', 'paymentProofImages', 'referenceImages');
         return view('invoices.show', compact('invoice'));
     }
 
-    //menampilkan edit faktur
     public function edit(Invoice $invoice)
     {
-        //faktur yang sudah lunas tidak boleh diedit.
         if ($invoice->is_paid) {
             return redirect()->route('invoices.show', $invoice->id)->with('error', 'Faktur yang sudah lunas tidak dapat diedit.');
         }
-        //return view
         $invoice->load('invoiceItems', 'referenceImages');
         return view('invoices.edit', compact('invoice'));
     }
 
-    //fungsi memperbarui data faktur
     public function update(Request $request, Invoice $invoice)
     {
-        //faktur lunas tidak boleh diubah
         if ($invoice->is_paid) {
             return redirect()->route('invoices.show', $invoice->id)->with('error', 'Faktur yang sudah lunas tidak dapat diubah.');
         }
 
-        //validasi data dan pesan error kostum
         $validatedData = $request->validate([
             'invoice_number' => 'required|string|max:255|unique:invoices,invoice_number,' . $invoice->id,
             'po_number' => 'nullable|string|max:255',
@@ -253,38 +220,28 @@ class InvoiceController extends Controller
             'other_taxes.*.value' => 'nullable|numeric|min:0',
             'reference_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5000',
             'images_to_delete' => 'nullable|string',
-        ],[
-            'invoice_number.required' => 'Nomor faktur wajib diisi.',
-            'invoice_date.required' => 'Tanggal faktur wajib diisi.',
-            'received_date.required' => 'Tanggal diterima wajib diisi.',
-            'due_date.required_if' => 'Jatuh tempo wajib diisi untuk pembayaran kredit.',
-            'items.required' => 'Faktur harus memiliki setidaknya satu barang.',
-            'items.*.item_name.required' => 'Nama barang wajib diisi.',
-            'items.*.quantity.required' => 'Jumlah barang wajib diisi.',
-            'items.*.unit.required' => 'Satuan barang wajib diisi.',
-            'items.*.price.required' => 'Harga barang wajib diisi.',
         ]);
 
         DB::beginTransaction();
         try {
-            //hapus gambar yang ditandai
+            // UBAH: Hapus gambar dari disk 'public_uploads'
             if ($request->filled('images_to_delete')) {
                 $imageIds = explode(',', $request->input('images_to_delete'));
                 $imagesToDelete = InvoiceImage::whereIn('id', $imageIds)->get();
                 foreach ($imagesToDelete as $image) {
-                    Storage::disk('public')->delete(str_replace('/storage', '', $image->filepath));
+                    Storage::disk('public_uploads')->delete($image->filepath);
                     $image->delete();
                 }
             }
 
-            //unggah gambar baru (jika ada)
+            // UBAH: Unggah gambar baru ke disk 'public_uploads'
             if ($request->hasFile('reference_images')) {
                 foreach ($request->file('reference_images') as $imageFile) {
                     if ($imageFile && $imageFile->isValid()) {
-                        $path = $imageFile->store("invoice_images/{$invoice->id}/references", 'public');
+                        $path = $imageFile->store("invoice_images/{$invoice->id}/references", 'public_uploads');
                         $invoice->invoiceImages()->create([
                             'filename' => $imageFile->hashName(),
-                            'filepath' => Storage::url($path),
+                            'filepath' => $path, // Simpan path relatif
                             'title'    => $imageFile->getClientOriginalName(),
                             'type'     => 'reference'
                         ]);
@@ -292,7 +249,6 @@ class InvoiceController extends Controller
                 }
             }
             
-            //hapus semua item lama, lalu buat ulang dengan data baru
             $invoice->invoiceItems()->delete();
             $subtotalItems = 0;
             foreach ($validatedData['items'] as $itemData) {
@@ -307,7 +263,7 @@ class InvoiceController extends Controller
                 $subtotalItems += $subtotal;
             }
 
-            // hitung ulang semua total
+            // Hitung ulang total
             $discountValue = (float)($validatedData['discount_value'] ?? 0);
             $discountAmount = ($validatedData['discount_type'] === 'percentage') ? ($subtotalItems * $discountValue) / 100 : $discountValue;
             $taxBase = $subtotalItems - $discountAmount;
@@ -327,7 +283,7 @@ class InvoiceController extends Controller
             }
             $totalAmount = $taxBase + $ppnAmount + $totalOtherTaxesAmount;
 
-            // update data faktur
+            // Update data faktur
             $invoice->update([
                 'invoice_number' => $validatedData['invoice_number'],
                 'po_number' => $validatedData['po_number'],
@@ -354,99 +310,80 @@ class InvoiceController extends Controller
         }
     }
 
-    //menandai faktur sebagai lunas
     public function markPaid(Request $request, Invoice $invoice)
     {
-        // jika sudah lunas yaudah 
         if ($invoice->is_paid) {
             return back();
         }
-
-        //wajib unggah bukti pembayaran sebelum menandai lunas
         if ($invoice->paymentProofImages()->count() == 0 && !$request->hasFile('payment_proof_image')) {
             return back()->with('error', 'Gagal. Anda harus mengunggah bukti pembayaran sebelum menandai faktur sebagai lunas.');
         }
+        
+        $request->validate([
+            'payment_proof_image' => 'sometimes|required|image|mimes:jpeg,png,jpg,gif,svg|max:5000',
+            'title' => 'nullable|string|max:255'
+        ]);
 
-        //proses dulu gambar bukti pembayaran
+        // UBAH: Proses gambar bukti pembayaran dengan disk 'public_uploads'
         if($request->hasFile('payment_proof_image')) {
-            $request->validate([
-                'payment_proof_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5000',
-                'title' => 'nullable|string|max:255'
-            ],[
-                'payment_proof_image.required' => 'Anda harus memilih file gambar untuk diunggah.',
-                'payment_proof_image.image' => 'File yang diunggah harus berupa gambar.',
-                'payment_proof_image.mimes' => 'Format gambar harus jpeg, png, jpg, gif, atau svg.',
-                'payment_proof_image.max' => 'Ukuran gambar maksimal 5MB.',
-            ]);
-
             $image = $request->file('payment_proof_image');
-            $path = $image->store('invoice_images/' . $invoice->id . '/payment_proofs', 'public');
+            $path = $image->store('invoice_images/' . $invoice->id . '/payment_proofs', 'public_uploads');
 
             $invoice->invoiceImages()->create([
                 'filename' => $image->hashName(),
-                'filepath' => Storage::url($path),
+                'filepath' => $path, // Simpan path relatif
                 'title'    => $request->title ?? 'Bukti Pembayaran',
                 'type'     => 'payment_proof'
             ]);
         }
         
-        // kalo valid semua maka tandai lunas
         $invoice->update(['is_paid' => true]);
         return back()->with('success', 'Faktur berhasil ditandai lunas.');
     }
 
-    //membatalkan status lunas
     public function unmarkPaid(Invoice $invoice)
-    {        
+    {       
         $invoice->update(['is_paid' => false]);
         return back()->with('success', 'Pelunasan faktur berhasil dibatalkan.');
     }
 
-    //upload gambar bukti pembayaran
     public function uploadPaymentProof(Request $request, Invoice $invoice)
     {
-        // tidak bisa dilakukan jika faktur sudah lunas
         if ($invoice->is_paid) {
             return back()->with('error', 'Tidak dapat mengubah faktur yang sudah lunas.');
         }
         
-        // validasi
         $request->validate([
             'payment_proof_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5000',
             'title' => 'nullable|string|max:255'
-        ],[
-            'payment_proof_image.required' => 'Anda harus memilih file gambar untuk diunggah.',
-            'payment_proof_image.image' => 'File yang diunggah harus berupa gambar.',
-            'payment_proof_image.mimes' => 'Format gambar harus jpeg, png, jpg, gif, atau svg.',
-            'payment_proof_image.max' => 'Ukuran gambar maksimal 5MB.',
         ]);
 
         if ($request->hasFile('payment_proof_image')) {
             $image = $request->file('payment_proof_image');
-            $path = $image->store('invoice_images/' . $invoice->id . '/payment_proofs', 'public');
+            
+            // UBAH: Gunakan disk 'public_uploads'
+            $path = $image->store('invoice_images/' . $invoice->id . '/payment_proofs', 'public_uploads');
 
             $invoice->invoiceImages()->create([
                 'filename' => $image->hashName(),
-                'filepath' => Storage::url($path),
+                'filepath' => $path, // Simpan path relatif
                 'title'    => $request->title ?? 'Bukti Pembayaran',
                 'type'     => 'payment_proof'
             ]);
+            
             return back()->with('success', 'Bukti pembayaran berhasil diunggah.');
         }
         return back()->with('error', 'Gagal mengunggah bukti pembayaran.');
     }
 
-    //menghapus gambar 
     public function destroyImage(InvoiceImage $image)
     {
         try {
-            //hapus file dari server (storage)
-            $storagePath = str_replace('/storage/', '', $image->filepath);
-
-            if (Storage::disk('public')->exists($storagePath)) {
-                Storage::disk('public')->delete($storagePath);
+            // UBAH: Hapus file dari disk 'public_uploads' menggunakan path dari DB
+            if (Storage::disk('public_uploads')->exists($image->filepath)) {
+                Storage::disk('public_uploads')->delete($image->filepath);
             }
-            //hapus gambar dari database.
+            
             $image->delete();
             return back()->with('success', 'Gambar faktur berhasil dihapus.');
         } catch (\Exception $e) {

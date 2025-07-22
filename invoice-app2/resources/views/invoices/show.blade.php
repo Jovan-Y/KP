@@ -190,8 +190,9 @@
                             <div class="grid grid-cols-2 gap-4">
                                 @foreach($invoice->paymentProofImages as $image)
                                     <div class="border rounded-lg overflow-hidden shadow-sm">
-                                        <a href="{{ $image->filepath }}" target="_blank">
-                                            <img src="{{ $image->filepath }}" alt="{{ $image->title ?? $image->filename }}" class="w-full h-32 object-cover">
+                                        {{-- PERBAIKAN: Menggunakan helper asset() untuk membuat URL --}}
+                                        <a href="{{ asset('uploads/' . $image->filepath) }}" target="_blank">
+                                            <img src="{{ asset('uploads/' . $image->filepath) }}" alt="{{ $image->title ?? $image->filename }}" class="w-full h-32 object-cover">
                                         </a>
                                         <div class="p-2 text-xs text-gray-600 flex justify-between items-center">
                                             <p class="truncate pr-2" title="{{ $image->title ?? $image->filename }}">{{ $image->title ?? $image->filename }}</p>
@@ -211,25 +212,27 @@
                     </div>
                 </div>
 
+                {{-- KOLOM KANAN: KHUSUS GAMBAR FAKTUR --}}
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                         <h4 class="text-lg font-bold mb-4 text-gray-900">Gambar Faktur</h4>
-                         @if($invoice->referenceImages->isNotEmpty())
+                        <h4 class="text-lg font-bold mb-4 text-gray-900">Gambar Faktur</h4>
+                        @if($invoice->referenceImages->isNotEmpty())
                             <div class="grid grid-cols-2 gap-4">
                                 @foreach($invoice->referenceImages as $image)
-                                     <div class="border rounded-lg overflow-hidden shadow-sm">
-                                         <a href="{{ $image->filepath }}" target="_blank">
-                                             <img src="{{ $image->filepath }}" alt="{{ $image->title ?? $image->filename }}" class="w-full h-32 object-cover">
-                                         </a>
-                                         <div class="p-2 text-xs text-gray-600">
-                                             <p class="truncate" title="{{ $image->title ?? $image->filename }}">{{ $image->title ?? $image->filename }}</p>
-                                         </div>
-                                     </div>
+                                    <div class="border rounded-lg overflow-hidden shadow-sm">
+                                        {{-- PERBAIKAN: Menggunakan helper asset() untuk membuat URL --}}
+                                        <a href="{{ asset('uploads/' . $image->filepath) }}" target="_blank">
+                                            <img src="{{ asset('uploads/' . $image->filepath) }}" alt="{{ $image->title ?? $image->filename }}" class="w-full h-32 object-cover">
+                                        </a>
+                                        <div class="p-2 text-xs text-gray-600">
+                                            <p class="truncate" title="{{ $image->title ?? $image->filename }}">{{ $image->title ?? $image->filename }}</p>
+                                        </div>
+                                    </div>
                                 @endforeach
                             </div>
-                         @else
-                             <p class="text-gray-500 text-center py-4">Tidak ada gambar referensi.</p>
-                         @endif
+                        @else
+                            <p class="text-gray-500 text-center py-4">Tidak ada gambar referensi.</p>
+                        @endif
                     </div>
                 </div>
             </div>
